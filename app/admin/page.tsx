@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LoggedInHeader } from "@/app/components/LoggedInHeader";
 import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle } from 'lucide-react';
+import Header from "@/app/components/header";
 
 interface ComponentStatus {
   name: string;
@@ -44,7 +44,7 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <LoggedInHeader username="Admin" onLogout={handleLogout} userRole="admin" />
+      <Header isLoggedIn={true} />
       <main className="flex-grow p-6">
         <h1 className="text-2xl font-bold mb-6">System Status</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

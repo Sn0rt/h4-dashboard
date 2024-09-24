@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {  ChevronUp, ChevronRight, BarChart, Cloud, CreditCard, FileText, Lock, Network, Server, Cpu, Workflow } from "lucide-react"
-import { LoggedInHeader } from "@/app/components/LoggedInHeader"
 import { MenuItem } from './interfaces';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Argo } from './components/Argo';
 import { NetworkMenu } from './components/Network';
 import { ResourcePool } from './components/ResourcePool';
 import { Security } from './components/Security';
+import { Breadcrumb } from "@/app/components/Breadcrumb";
+import Header from '@/app/components/header'; // 导入 Header 组件
 
 const menuItems: MenuItem[] = [
   {
@@ -78,8 +79,45 @@ export default function DashboardPage() {
   }, [router]);
 
   if (!isLoggedIn) {
-    return null; // 或者返回一个加载���示器
+    return null; // 或者返回一个加载示器
   }
+
+  const getBreadcrumbItems = () => {
+    const baseBreadcrumbItems = [
+      { label: 'Dashboard', href: '/dashboard' },
+    ];
+
+    switch (activeMenu) {
+      case 'Argo*':
+        return [
+          ...baseBreadcrumbItems,
+          { label: 'Argo', href: '/dashboard' },
+          { label: activeSubMenu, href: '/dashboard' }
+        ];
+      case 'Security':
+        return [
+          ...baseBreadcrumbItems,
+          { label: 'Security', href: '/dashboard' }
+        ];
+      case 'ResourcePool':
+        return [
+          ...baseBreadcrumbItems,
+          { label: 'ResourcePool', href: '/dashboard' }
+        ];
+      case 'Network':
+        return [
+          ...baseBreadcrumbItems,
+          { label: 'Network', href: '/dashboard' }
+        ];
+      case 'Bill':
+        return [
+          ...baseBreadcrumbItems,
+          { label: 'Bill', href: '/dashboard' }
+        ];
+      default:
+        return baseBreadcrumbItems;
+    }
+  };
 
   const renderContent = () => {
     switch (activeMenu) {
@@ -155,10 +193,13 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
-      <LoggedInHeader username={username} onLogout={handleLogout} userRole="user" />
+      <Header isLoggedIn={isLoggedIn} username={username} userRole={localStorage.getItem('userRole') ?? undefined} onLogout={handleLogout} /> {/* 使用 Header 组件 */}
+      <div className="px-6 py-2 border-b border-border">
+        <Breadcrumb items={getBreadcrumbItems()} />
+      </div>
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-64 border-r border-border">
-          <ScrollArea className="h-[calc(100vh-60px)]">
+          <ScrollArea className="h-[calc(100vh-112px)]">
             {menuItems.map((item) => (
               <div key={item.title}>
                 <Button

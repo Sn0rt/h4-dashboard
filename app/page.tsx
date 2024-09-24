@@ -22,7 +22,7 @@ const technologies = [
 export default function Home() {
     return (
         <div className="flex flex-col min-h-screen">
-            <Header />
+            <Header isLoggedIn={false} />
             <main className="flex-grow flex flex-col items-center justify-between p-24 relative overflow-hidden">
                 <div className="w-full max-w-7xl mx-auto">
                     <h1 className="text-4xl font-bold text-center mb-12 text-foreground">
@@ -30,12 +30,10 @@ export default function Home() {
                     </h1>
 
                     <div className="flex flex-col md:flex-row justify-between items-center gap-12">
-                        {/* Left side - ParticleCube */}
                         <div className="w-full md:w-1/2 aspect-square">
                             <ParticleCube />
                         </div>
 
-                        {/* Right side - Features */}
                         <div className="w-full md:w-1/2 space-y-6">
                             {features.map((feature, index) => (
                                 <Card key={index} className="bg-background/80 backdrop-blur-sm">
