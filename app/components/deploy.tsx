@@ -101,7 +101,7 @@ export function DeployForm({ onCancel }: DeployFormProps) {
     // 这里应该是一个实际的API调用来验证仓库
     // 为了演示，我们使用一个模拟的异步操作
     setTimeout(() => {
-      // 随机设置验证结果
+      // 随机设置验���结果
       setValidationStatus(Math.random() > 0.5 ? 'success' : 'error');
     }, 1000);
   };
@@ -151,10 +151,8 @@ export function DeployForm({ onCancel }: DeployFormProps) {
       setProgress(calculateProgress());
     };
 
-    // 初始计算
     updateProgress();
 
-    // 添加事件监听器来监听表单变化
     const form = document.querySelector('form');
     const observer = new MutationObserver(updateProgress);
 
@@ -168,7 +166,7 @@ export function DeployForm({ onCancel }: DeployFormProps) {
     }
 
     return () => observer.disconnect();
-  }, [ingresses]);
+  }, [ingresses, calculateProgress]);
 
   // 原有的 Environment 部分
   const renderEnvironmentSection = () => (

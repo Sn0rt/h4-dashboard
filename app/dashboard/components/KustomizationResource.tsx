@@ -50,10 +50,14 @@ export function KustomizationResource() {
                 <p className="font-medium">{kustomization.path}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Status</p>
+                <p className="text-sm text-gray-500">Validation Status</p>
                 <div className="flex items-center space-x-2">
-                  {getStatusIcon(kustomization.status)}
-                  <span>{kustomization.status}</span>
+                  {kustomization.validated ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                  )}
+                  <span>{kustomization.validated ? 'Validated' : 'Not Validated'}</span>
                 </div>
               </div>
               <div>

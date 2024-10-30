@@ -27,27 +27,27 @@ interface HeaderProps {
 export default function Header({ isLoggedIn, username, userRole, onLogout }: HeaderProps) {
   return (
     <header className="bg-background border-b border-border">
-      <div className="w-full px-4 py-4 flex justify-between items-center">
+      <div className="w-full px-6 py-4 flex justify-between items-center">
         <div className="flex items-center">
-          <h1 className="text-2xl font-bold text-foreground mr-4">
-            <span className="bg-primary text-primary-foreground px-2 py-1 rounded-md mr-1 transition-all duration-300 hover:bg-secondary hover:text-secondary-foreground">
+          <h1 className="text-3xl font-bold text-foreground mr-6">
+            <span className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md mr-2 transition-all duration-300 hover:bg-secondary hover:text-secondary-foreground">
               H4
             </span>
-            &nbsp;Platform
+            Platform
           </h1>
         </div>
-        <nav className="flex items-center space-x-4">
+        <nav className="flex items-center space-x-6">
           {!isLoggedIn && (
             <>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-base">
                 Docs
               </Button>
-              <Button variant="ghost" size="sm">
-                <Github className="mr-2 h-4 w-4"/>
+              <Button variant="ghost" size="sm" className="text-base">
+                <Github className="mr-3 h-5 w-5"/>
                 GitHub
               </Button>
               <Link href="/login" passHref>
-                <Button variant="default" size="sm">
+                <Button variant="default" size="sm" className="text-base px-6">
                   Login
                 </Button>
               </Link>
@@ -57,42 +57,42 @@ export default function Header({ isLoggedIn, username, userRole, onLogout }: Hea
             <>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <div className="flex items-center space-x-2 cursor-pointer">
-                    <span className="text-sm text-foreground">Welcome, {username}</span>
-                    <Avatar className="h-8 w-8 hover:ring-2 hover:ring-primary transition-all">
-                      <AvatarFallback className="bg-primary/10">
+                  <div className="flex items-center space-x-3 cursor-pointer">
+                    <span className="text-base text-foreground">Welcome, {username}</span>
+                    <Avatar className="h-10 w-10 hover:ring-2 hover:ring-primary transition-all">
+                      <AvatarFallback className="bg-primary/10 text-lg">
                         {username ? username[0].toUpperCase() : 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{username}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
+                <DropdownMenuContent className="w-64" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal p-4">
+                    <div className="flex flex-col space-y-1.5">
+                      <p className="text-base font-medium leading-none">{username}</p>
+                      <p className="text-sm leading-none text-muted-foreground">
                         user@example.com
                       </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>Role: {userRole}</span>
+                    <DropdownMenuItem className="p-3">
+                      <Shield className="mr-3 h-5 w-5" />
+                      <span className="text-sm">Role: {userRole}</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Clock className="mr-2 h-4 w-4" />
-                      <span>Timezone: UTC+8</span>
+                    <DropdownMenuItem className="p-3">
+                      <Clock className="mr-3 h-5 w-5" />
+                      <span className="text-sm">Timezone: UTC+8</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Building className="mr-2 h-4 w-4" />
-                      <span>Tenant: Default</span>
+                    <DropdownMenuItem className="p-3">
+                      <Building className="mr-3 h-5 w-5" />
+                      <span className="text-sm">Tenant: Default</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="text-red-600 cursor-pointer"
+                    className="text-red-600 cursor-pointer p-3"
                     onClick={onLogout}
                   >
                     Log out

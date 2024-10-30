@@ -5,6 +5,7 @@ export interface Kustomization {
   validated: boolean;
   owner: string;
   environments: string[];
+  lastApplied: string;
   source: {
     type: 'git' | 'helm';
     url: string;
@@ -33,6 +34,7 @@ export const kustomizations: Kustomization[] = [
     validated: true,
     owner: 'DevOps Team',
     environments: ['SIT', 'UAT', 'PRD'],
+    lastApplied: '2024-03-15T10:30:00Z',
     source: {
       type: 'git',
       url: 'https://github.com/org/argocd',
@@ -60,6 +62,7 @@ export const kustomizations: Kustomization[] = [
     validated: true,
     owner: 'Platform Team',
     environments: ['SIT', 'UAT'],
+    lastApplied: '2024-03-15T09:45:00Z',
     source: {
       type: 'git',
       url: 'https://github.com/org/argo-workflows',
@@ -87,6 +90,7 @@ export const kustomizations: Kustomization[] = [
     validated: true,
     owner: 'Logging Team',
     environments: ['SIT1', 'UAT'],
+    lastApplied: '2024-03-15T08:15:00Z',
     source: {
       type: 'git',
       url: 'https://github.com/org/fluent-operator',
@@ -114,6 +118,7 @@ export const kustomizations: Kustomization[] = [
     validated: true,
     owner: 'Security Team',
     environments: ['SIT', 'SIT1', 'UAT', 'PRD'],
+    lastApplied: '2024-03-15T07:30:00Z',
     source: {
       type: 'git',
       url: 'https://github.com/org/vault-config',
@@ -141,6 +146,7 @@ export const kustomizations: Kustomization[] = [
     validated: true,
     owner: 'Monitoring Team',
     environments: ['SIT', 'UAT', 'PRD'],
+    lastApplied: '2024-03-14T15:30:00Z',
     source: {
       type: 'git',
       url: 'https://github.com/org/loki-config',
@@ -168,6 +174,7 @@ export const kustomizations: Kustomization[] = [
     validated: false,
     owner: 'Platform Team',
     environments: ['SIT', 'UAT'],
+    lastApplied: '2024-03-14T14:20:00Z',
     source: {
       type: 'git',
       url: 'https://github.com/org/eck-operator',
