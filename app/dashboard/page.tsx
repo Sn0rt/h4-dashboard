@@ -198,44 +198,71 @@ export default function DashboardPage() {
         <Breadcrumb items={getBreadcrumbItems()} />
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 border-r border-border">
+        <aside className="w-72 border-r border-border bg-card">
           <ScrollArea className="h-[calc(100vh-112px)]">
-            {menuItems.map((item) => (
-              <div key={item.title}>
-                <Button
-                  variant={activeMenu === item.title ? "secondary" : "ghost"}
-                  className="w-full justify-between hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => {
-                    setActiveMenu(item.title)
-                    if (item.subItems.length > 0) {
-                      toggleMenu(item.title)
-                      setActiveSubMenu(item.subItems[0])
-                    }
-                  }}
-                >
-                  <span className="flex items-center">
-                    <item.icon className="mr-2 h-4 w-4"/>
-                    {item.title}
-                  </span>
-                  {item.subItems.length > 0 && (
-                    expandedMenus.includes(item.title) ? <ChevronUp className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-                {expandedMenus.includes(item.title) && item.subItems.map((subItem) => (
-                  <Button
-                    key={subItem}
-                    variant={activeSubMenu === subItem ? "secondary" : "ghost"}
-                    className="w-full justify-start pl-8 hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => {
-                      setActiveMenu(item.title)
-                      setActiveSubMenu(subItem)
-                    }}
-                  >
-                    {subItem}
-                  </Button>
+            <div className="p-6">
+              <nav className="space-y-4">
+                {menuItems.map((item) => (
+                  <div key={item.title} className="space-y-1">
+                    <Button
+                      variant={activeMenu === item.title ? "secondary" : "ghost"}
+                      className={`w-full justify-between px-4 py-3 hover:bg-accent hover:text-accent-foreground
+                        ${activeMenu === item.title ? 'bg-secondary/50 shadow-sm font-medium' : 'text-muted-foreground'}
+                        rounded-lg transition-all duration-200 ease-in-out group`}
+                      onClick={() => {
+                        setActiveMenu(item.title)
+                        if (item.subItems.length > 0) {
+                          toggleMenu(item.title)
+                          setActiveSubMenu(item.subItems[0])
+                        }
+                      }}
+                    >
+                      <span className="flex items-center text-sm">
+                        <item.icon className={`mr-3 h-4 w-4 transition-colors
+                          ${activeMenu === item.title ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
+                        />
+                        {item.title}
+                      </span>
+                      {item.subItems.length > 0 && (
+                        <span className={`transition-transform duration-200
+                          ${expandedMenus.includes(item.title) ? 'rotate-180' : ''}
+                          ${activeMenu === item.title ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          <ChevronUp className="h-4 w-4" />
+                        </span>
+                      )}
+                    </Button>
+                    {expandedMenus.includes(item.title) && (
+                      <div className="ml-4 pl-4 border-l border-border/50 space-y-1">
+                        {item.subItems.map((subItem) => (
+                          <Button
+                            key={subItem}
+                            variant={activeSubMenu === subItem ? "secondary" : "ghost"}
+                            className={`w-full justify-start px-4 py-2 text-sm rounded-lg
+                              ${activeSubMenu === subItem
+                                ? 'bg-secondary/50 text-foreground font-medium'
+                                : 'text-muted-foreground hover:text-foreground'
+                              }
+                              transition-all duration-200 group`}
+                            onClick={() => {
+                              setActiveMenu(item.title)
+                              setActiveSubMenu(subItem)
+                            }}
+                          >
+                            <span className="relative flex items-center">
+                              <span className="absolute -left-6 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-border
+                                group-hover:bg-foreground/50 transition-colors
+                                ${activeSubMenu === subItem ? 'bg-foreground' : ''}"
+                              />
+                              {subItem}
+                            </span>
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
-              </div>
-            ))}
+              </nav>
+            </div>
           </ScrollArea>
         </aside>
         <main className="flex-1 p-6 overflow-auto bg-background">
