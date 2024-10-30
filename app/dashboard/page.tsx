@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {  ChevronUp, ChevronRight, BarChart, Cloud, CreditCard, FileText, Lock, Network, Server, Cpu, Workflow, Settings } from "lucide-react"
+import {  ChevronUp, ChevronRight, BarChart, Cloud, CreditCard, FileText, Lock, Network, Server, Cpu, Workflow, Settings, ChevronLeft } from "lucide-react"
 import { MenuItem } from './interfaces';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Argo } from './components/Argo';
@@ -57,6 +57,7 @@ export default function DashboardPage() {
   const [activeSubMenu, setActiveSubMenu] = useState('ArgoApplication')
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['Deploy']);
   const [username, setUsername] = useState('');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const toggleMenu = (title: string) => {
     setExpandedMenus(prev =>
@@ -238,10 +239,24 @@ export default function DashboardPage() {
         <Breadcrumb items={getBreadcrumbItems()} />
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 border-r border-border bg-card flex flex-col">
+        <aside className={`${
+          isSidebarCollapsed ? 'w-16' : 'w-72'
+        } border-r border-border bg-card flex flex-col transition-all duration-300 ease-in-out relative`}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute -right-3 top-3 h-6 w-6 rounded-full border border-border bg-background shadow-sm z-10"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          >
+            {isSidebarCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+
           <ScrollArea className="flex-1">
             <div className="p-6">
-              {/* Main Menu */}
               <nav className="space-y-4">
                 {menuItems.map((item) => (
                   <div key={item.title} className="space-y-1">
@@ -252,19 +267,19 @@ export default function DashboardPage() {
                         rounded-lg transition-all duration-200 ease-in-out group`}
                       onClick={() => {
                         setActiveMenu(item.title)
-                        if (item.subItems.length > 0) {
+                        if (item.subItems.length > 0 && !isSidebarCollapsed) {
                           toggleMenu(item.title)
                           setActiveSubMenu(item.subItems[0])
                         }
                       }}
                     >
                       <span className="flex items-center text-sm">
-                        <item.icon className={`mr-3 h-4 w-4 transition-colors
+                        <item.icon className={`h-4 w-4 transition-colors
                           ${activeMenu === item.title ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
                         />
-                        {item.title}
+                        {!isSidebarCollapsed && <span className="ml-3">{item.title}</span>}
                       </span>
-                      {item.subItems.length > 0 && (
+                      {!isSidebarCollapsed && item.subItems.length > 0 && (
                         <span className={`transition-transform duration-200
                           ${expandedMenus.includes(item.title) ? 'rotate-180' : ''}
                           ${activeMenu === item.title ? 'text-foreground' : 'text-muted-foreground'}`}>
@@ -272,7 +287,7 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </Button>
-                    {expandedMenus.includes(item.title) && (
+                    {!isSidebarCollapsed && expandedMenus.includes(item.title) && (
                       <div className="ml-4 pl-4 border-l border-border/50 space-y-1">
                         {item.subItems.map((subItem) => (
                           <Button
@@ -317,10 +332,10 @@ export default function DashboardPage() {
               }}
             >
               <span className="flex items-center text-sm">
-                <settingsItem.icon className={`mr-3 h-4 w-4 transition-colors
+                <settingsItem.icon className={`h-4 w-4 transition-colors
                   ${activeMenu === settingsItem.title ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
                 />
-                {settingsItem.title}
+                {!isSidebarCollapsed && <span className="ml-3">{settingsItem.title}</span>}
               </span>
             </Button>
           </div>
