@@ -37,6 +37,7 @@ import {
   type Repository,
   type TemplateSource,
 } from './mockData';
+import { kustomizations } from '@/app/dashboard/components/kustomizationMock';
 
 // 注册 YAML 语言
 SyntaxHighlighter.registerLanguage('yaml', yaml);
@@ -228,7 +229,7 @@ export function DeployForm({ onCancel }: DeployFormProps) {
     }
   };
 
-  // 修改 renderResourceQuotas 函数中的卡片内��分
+  // 修改 renderResourceQuotas 函数中的卡片内
   const renderResourceQuotas = () => (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
@@ -386,30 +387,26 @@ export function DeployForm({ onCancel }: DeployFormProps) {
                         <SelectValue placeholder="Choose a built-in template" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="template1">
-                          <div className="space-y-1">
-                            <div className="font-medium">Basic Web Application</div>
-                            <div className="text-sm text-gray-500">
-                              Standard web application template with basic configurations
+                        {kustomizations.map((kustomization) => (
+                          <SelectItem key={kustomization.id} value={kustomization.name}>
+                            <div className="space-y-1">
+                              <div className="font-medium">{kustomization.name}</div>
+                              <div className="text-sm text-gray-500">
+                                Path: {kustomization.path}
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {kustomization.environments.map((env) => (
+                                    <span
+                                      key={env}
+                                      className="px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                                    >
+                                      {env}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="template2">
-                          <div className="space-y-1">
-                            <div className="font-medium">Microservice Application</div>
-                            <div className="text-sm text-gray-500">
-                              Template for microservice with service mesh integration
-                            </div>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="template3">
-                          <div className="space-y-1">
-                            <div className="font-medium">Data Processing Application</div>
-                            <div className="text-sm text-gray-500">
-                              Template optimized for data processing workloads
-                            </div>
-                          </div>
-                        </SelectItem>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

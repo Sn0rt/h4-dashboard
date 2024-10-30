@@ -99,66 +99,6 @@ const applications: ExtendedApplication[] = [
   },
 ];
 
-const workflowTemplates: WorkflowTemplate[] = [
-  { id: 1, name: 'Data Processing', description: 'Template for data processing workflows', createdAt: '2023-05-01' },
-  { id: 2, name: 'ML Training', description: 'Machine learning model training template', createdAt: '2023-05-02' },
-  { id: 3, name: 'ETL Pipeline', description: 'Extract, Transform, Load pipeline template', createdAt: '2023-05-03' },
-];
-
-// Mock data for Workflows
-const workflows: Workflow[] = [
-  {
-    id: 1,
-    name: 'data-processing',
-    status: 'Succeeded',
-    startedAt: '2023-06-01T10:00:00Z',
-    finishedAt: '2023-06-01T10:15:00Z',
-    duration: '15m',
-    progress: '100%',
-    message: 'Data processing completed successfully'
-  },
-  {
-    id: 2,
-    name: 'ml-training',
-    status: 'Running',
-    startedAt: '2023-06-02T09:30:00Z',
-    finishedAt: null,
-    duration: '1h 30m',
-    progress: '60%',
-    message: 'Training model on batch 3 of 5'
-  },
-  {
-    id: 3,
-    name: 'etl-pipeline',
-    status: 'Failed',
-    startedAt: '2023-06-03T08:00:00Z',
-    finishedAt: '2023-06-03T08:05:00Z',
-    duration: '5m',
-    progress: '20%',
-    message: 'Error in data extraction step'
-  },
-  {
-    id: 4,
-    name: 'data-backup',
-    status: 'Pending',
-    startedAt: null,
-    finishedAt: null,
-    duration: '-',
-    progress: '0%',
-    message: 'Waiting for resources'
-  },
-  {
-    id: 5,
-    name: 'report-generation',
-    status: 'Running',
-    startedAt: '2023-06-04T11:00:00Z',
-    finishedAt: null,
-    duration: '45m',
-    progress: '80%',
-    message: 'Generating final report'
-  }
-];
-
 const getStatusIcon = (status: string) => {
   switch (status) {
     case 'Synced':
@@ -357,7 +297,7 @@ export function ArgoResource({ activeSubMenu }: { activeSubMenu: string }) {
       <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
         <CardHeader>
           <CardTitle>{activeSubMenu}</CardTitle>
-          {activeSubMenu === 'Application' && (
+          {activeSubMenu === 'ArgoApplication' && (
             <Input
               placeholder="Search by name, label, or owner..."
               value={searchTerm}
@@ -370,7 +310,7 @@ export function ArgoResource({ activeSubMenu }: { activeSubMenu: string }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-100 dark:bg-gray-700">
-                {activeSubMenu === 'Application' && (
+                {activeSubMenu === 'ArgoApplication' && (
                   <>
                     <TableHead className="w-[50px]"></TableHead>
                     <TableHead>Name</TableHead>
@@ -381,27 +321,10 @@ export function ArgoResource({ activeSubMenu }: { activeSubMenu: string }) {
                     <TableHead></TableHead>
                   </>
                 )}
-                {activeSubMenu === 'WorkflowTemplate' && (
-                  <>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Created At</TableHead>
-                  </>
-                )}
-                {activeSubMenu === 'Workflow' && (
-                  <>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Started At</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead>Message</TableHead>
-                  </>
-                )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activeSubMenu === 'Application' && filteredApps.map((app) => (
+              {activeSubMenu === 'ArgoApplication' && filteredApps.map((app) => (
                 <>
                   <TableRow key={app.id}>
                     <TableCell>
@@ -460,23 +383,6 @@ export function ArgoResource({ activeSubMenu }: { activeSubMenu: string }) {
                     </TableRow>
                   )}
                 </>
-              ))}
-              {activeSubMenu === 'WorkflowTemplate' && workflowTemplates.map((template) => (
-                <TableRow key={template.id}>
-                  <TableCell>{template.name}</TableCell>
-                  <TableCell>{template.description}</TableCell>
-                  <TableCell>{template.createdAt}</TableCell>
-                </TableRow>
-              ))}
-              {activeSubMenu === 'Workflow' && workflows.map((workflow) => (
-                <TableRow key={workflow.id}>
-                  <TableCell>{workflow.name}</TableCell>
-                  <TableCell>{workflow.status}</TableCell>
-                  <TableCell>{workflow.startedAt || '-'}</TableCell>
-                  <TableCell>{workflow.duration}</TableCell>
-                  <TableCell>{workflow.progress}</TableCell>
-                  <TableCell>{workflow.message}</TableCell>
-                </TableRow>
               ))}
             </TableBody>
           </Table>

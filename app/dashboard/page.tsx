@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {  ChevronUp, ChevronRight, BarChart, Cloud, CreditCard, FileText, Lock, Network, Server, Cpu, Workflow } from "lucide-react"
+import {  ChevronUp, ChevronRight, BarChart, Cloud, CreditCard, FileText, Lock, Network, Server, Cpu, Workflow, Settings } from "lucide-react"
 import { MenuItem } from './interfaces';
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Argo } from './components/Argo';
@@ -13,12 +13,14 @@ import { ResourcePool } from './components/ResourcePool';
 import { Security } from './components/Security';
 import { Breadcrumb } from "@/app/components/Breadcrumb";
 import Header from '@/app/components/header'; // 导入 Header 组件
+import { Label } from "@/components/ui/label"
+import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent } from "@/components/ui/select"
 
 const menuItems: MenuItem[] = [
   {
-    title: 'Argo*',
+    title: 'Deploy',
     icon: Workflow,
-    subItems: ['Application', 'Workflow', 'WorkflowTemplate']
+    subItems: ['ArgoApplication', 'Kustomization']
   },
   {
     title: 'Security',
@@ -42,12 +44,18 @@ const menuItems: MenuItem[] = [
   }
 ]
 
+const settingsItem: MenuItem = {
+  title: 'Settings',
+  icon: Settings,
+  subItems: []
+};
+
 export default function DashboardPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
-  const [activeMenu, setActiveMenu] = useState('Argo*')
-  const [activeSubMenu, setActiveSubMenu] = useState('Application')
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['Argo*']);
+  const [activeMenu, setActiveMenu] = useState('Deploy')
+  const [activeSubMenu, setActiveSubMenu] = useState('ArgoApplication')
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['Deploy']);
   const [username, setUsername] = useState('');
 
   const toggleMenu = (title: string) => {
@@ -88,10 +96,10 @@ export default function DashboardPage() {
     ];
 
     switch (activeMenu) {
-      case 'Argo*':
+      case 'Deploy':
         return [
           ...baseBreadcrumbItems,
-          { label: 'Argo', href: '/dashboard' },
+          { label: 'Deploy', href: '/dashboard' },
           { label: activeSubMenu, href: '/dashboard' }
         ];
       case 'Security':
@@ -121,7 +129,7 @@ export default function DashboardPage() {
 
   const renderContent = () => {
     switch (activeMenu) {
-      case 'Argo*':
+      case 'Deploy':
         return <Argo activeSubMenu={activeSubMenu} />;
       case 'Security':
         return <Security activeSubMenu={activeSubMenu} />;
@@ -131,6 +139,8 @@ export default function DashboardPage() {
         return <NetworkMenu activeSubMenu={activeSubMenu} />;
       case 'Bill':
         return renderBilling();
+      case 'Settings':
+        return renderSettings();
       default:
         return null;
     }
@@ -191,6 +201,36 @@ export default function DashboardPage() {
     );
   };
 
+  const renderSettings = () => {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <Label>Timezone</Label>
+                <Select defaultValue="UTC+8">
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UTC+8">UTC+8</SelectItem>
+                    <SelectItem value="UTC+0">UTC+0</SelectItem>
+                    <SelectItem value="UTC-8">UTC-8</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* 可以在这里添加更多设置选项 */}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       <Header isLoggedIn={isLoggedIn} username={username} userRole={localStorage.getItem('userRole') ?? undefined} onLogout={handleLogout} /> {/* 使用 Header 组件 */}
@@ -198,9 +238,10 @@ export default function DashboardPage() {
         <Breadcrumb items={getBreadcrumbItems()} />
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 border-r border-border bg-card">
-          <ScrollArea className="h-[calc(100vh-112px)]">
+        <aside className="w-72 border-r border-border bg-card flex flex-col">
+          <ScrollArea className="flex-1">
             <div className="p-6">
+              {/* Main Menu */}
               <nav className="space-y-4">
                 {menuItems.map((item) => (
                   <div key={item.title} className="space-y-1">
@@ -264,6 +305,25 @@ export default function DashboardPage() {
               </nav>
             </div>
           </ScrollArea>
+
+          <div className="p-6 border-t border-border mt-auto">
+            <Button
+              variant={activeMenu === settingsItem.title ? "secondary" : "ghost"}
+              className={`w-full justify-start px-4 py-3 hover:bg-accent hover:text-accent-foreground
+                ${activeMenu === settingsItem.title ? 'bg-secondary/50 shadow-sm font-medium' : 'text-muted-foreground'}
+                rounded-lg transition-all duration-200 ease-in-out group`}
+              onClick={() => {
+                setActiveMenu(settingsItem.title)
+              }}
+            >
+              <span className="flex items-center text-sm">
+                <settingsItem.icon className={`mr-3 h-4 w-4 transition-colors
+                  ${activeMenu === settingsItem.title ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
+                />
+                {settingsItem.title}
+              </span>
+            </Button>
+          </div>
         </aside>
         <main className="flex-1 p-6 overflow-auto bg-background">
           {renderContent()}

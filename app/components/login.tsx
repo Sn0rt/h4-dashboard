@@ -4,36 +4,42 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Image from 'next/image';
-
-// Hardcoded users for demonstration
-const users = [
-  { username: 'admin', password: 'admin', role: 'admin' },
-  { username: 'user1', password: 'user1', role: 'user' },
-];
+import { AlertCircle } from 'lucide-react';
+import { users } from './mockData';
 
 export function FakeAuthentication() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const user = users.find(u => u.username === username && u.password === password);
-    if (user) {
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userRole', user.role);
-      localStorage.setItem('username', user.username);
+    setError(null);
 
-      // 根据角色重定向
-      if (user.role === 'admin') {
-        router.push('/admin'); // 重定向到 admin 页面
-      } else {
-        router.push('/dashboard'); // 重定向到 dashboard 页面
-      }
+    // 检查用户名是否存在
+    const userExists = users.find(u => u.username === username);
+    if (!userExists) {
+      setError(`User "${username}" does not exist. Please check your username.`);
+      return;
+    }
+
+    // 检查密码是否正确
+    const user = users.find(u => u.username === username && u.password === password);
+    if (!user) {
+      setError('Incorrect password. Please try again.');
+      return;
+    }
+
+    // 登录成功
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('userRole', user.role);
+    localStorage.setItem('username', user.username);
+
+    if (user.role === 'admin') {
+      router.push('/admin');
     } else {
-      setError('Invalid username or password');
+      router.push('/dashboard');
     }
   };
 
@@ -45,9 +51,13 @@ export function FakeAuthentication() {
           id="username"
           type="text"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            setError(null); // 清除错误信息当用户开始输入
+          }}
           required
-          className="bg-background text-foreground border-border focus:border-primary focus:ring-primary"
+          className={`bg-background text-foreground border-border focus:border-primary focus:ring-primary
+            ${error && error.includes('username') ? 'border-red-500' : ''}`}
         />
       </div>
       <div className="space-y-2">
@@ -56,13 +66,27 @@ export function FakeAuthentication() {
           id="password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setError(null); // 清除错误信息当用户开始输入
+          }}
           required
-          className="bg-background text-foreground border-border focus:border-primary focus:ring-primary"
+          className={`bg-background text-foreground border-border focus:border-primary focus:ring-primary
+            ${error && error.includes('password') ? 'border-red-500' : ''}`}
         />
       </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition duration-200 ease-in-out">Login</Button>
+      {error && (
+        <div className="flex items-center space-x-2 text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
+          <AlertCircle className="h-4 w-4" />
+          <p>{error}</p>
+        </div>
+      )}
+      <Button
+        type="submit"
+        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition duration-200 ease-in-out"
+      >
+        Login
+      </Button>
     </form>
   );
 }
