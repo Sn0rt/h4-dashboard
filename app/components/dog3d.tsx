@@ -3,20 +3,21 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import { Suspense } from 'react';
-import { MeshStandardMaterial } from 'three';
+import { MeshStandardMaterial, Object3D, Mesh } from 'three';
 
 function DogModel() {
   const { scene } = useGLTF('/3d/dog.glb');
 
-  scene.traverse((child: any) => {
-    if (child.isMesh) {
+  scene.traverse((child: Object3D) => {
+    if (child instanceof Mesh) {
       child.material = new MeshStandardMaterial({
-        color: '#6B7280',
-        roughness: 0.6,
-        metalness: 0.1,
+        color: '#4B5563',
+        roughness: 0.3,
+        metalness: 0.5,
         flatShading: false,
         transparent: true,
-        opacity: 0.9,
+        opacity: 1,
+        envMapIntensity: 1.5,
       });
     }
   });
@@ -41,15 +42,20 @@ export default function Dog3D() {
         <Suspense fallback={null}>
           <Stage
             environment="city"
-            intensity={0.4}
+            intensity={0.8}
             adjustCamera={false}
           >
             <DogModel />
-            <ambientLight intensity={0.7} />
+            <ambientLight intensity={1} />
             <directionalLight
               position={[5, 5, 5]}
-              intensity={0.8}
+              intensity={1.2}
               castShadow
+            />
+            <pointLight
+              position={[-5, 5, -5]}
+              intensity={0.5}
+              color="#ffffff"
             />
           </Stage>
           <OrbitControls
@@ -65,5 +71,4 @@ export default function Dog3D() {
   );
 }
 
-// preload for better performance
 useGLTF.preload('/3d/dog.glb');
