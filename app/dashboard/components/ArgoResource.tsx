@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ChevronRight } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-// 如果 ../interfaces 文件中没有定义 status，可以在这里扩展接口
+// 如果 ../interfaces 文件中没有定义 status，可��在这里扩展接口
 interface ExtendedApplication extends Application {
   status: 'Synced' | 'OutOfSync' | 'Unknown' | 'Progressing' | 'Degraded';
   resources: {
@@ -731,7 +731,7 @@ export function ArgoResource({ activeSubMenu, onSelectApp }: ArgoResourceProps) 
                                 <div className="font-medium">{release.commitLog}</div>
                                 {release.deploymentDetails && (
                                   <div className="text-xs text-gray-500">
-                                    Duration: {release.deploymentDetails.duration} | Replicas: {release.deploymentDetails.podReplicas}
+                                    Duration: {release.deploymentDetails.duration}
                                   </div>
                                 )}
                               </div>

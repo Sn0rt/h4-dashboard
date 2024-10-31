@@ -107,47 +107,46 @@ export function DeployForm({ onCancel }: DeployFormProps) {
     }, 1000);
   };
 
-  const calculateProgress = () => {
-    let totalFields = 0;
-    let completedFields = 0;
-
-    // Template Selection
-    totalFields += 1;
-    if (templateSource.value) completedFields += 1;
-
-    // Basic Information
-    totalFields += 3; // tenant name, app code, namespace
-    const basicInfoInputs = document.querySelectorAll('#tenantName, #appCode, #namespace');
-    basicInfoInputs.forEach(input => {
-      if ((input as HTMLInputElement).value) completedFields += 1;
-    });
-
-    // Ingresses
-    ingresses.forEach(ingress => {
-      totalFields += 3; // name, service, port
-      if (ingress.name) completedFields += 1;
-      if (ingress.service) completedFields += 1;
-      if (ingress.port) completedFields += 1;
-    });
-
-    // Environment
-    totalFields += 1;
-    const envSelect = document.querySelector('[placeholder="Select environment"]');
-    if ((envSelect as HTMLSelectElement)?.value) completedFields += 1;
-
-    // Resource Quotas (5 fields per environment * 3 environments)
-    totalFields += 15;
-    const quotaInputs = document.querySelectorAll('[placeholder*="vCPU"], [placeholder*="RAM"], [placeholder*="Storage"], [placeholder*="PVCs"], [placeholder*="Nodeports"]');
-    quotaInputs.forEach(input => {
-      if ((input as HTMLInputElement).value) completedFields += 1;
-    });
-
-    return Math.round((completedFields / totalFields) * 100);
-  };
-
-  const [progress, setProgress] = useState(0);
-
+  // 1. 将 calculateProgress 移动到 useEffect 内部
   useEffect(() => {
+    const calculateProgress = () => {
+      let totalFields = 0;
+      let completedFields = 0;
+
+      // Template Selection
+      totalFields += 1;
+      if (templateSource.value) completedFields += 1;
+
+      // Basic Information
+      totalFields += 3; // tenant name, app code, namespace
+      const basicInfoInputs = document.querySelectorAll('#tenantName, #appCode, #namespace');
+      basicInfoInputs.forEach(input => {
+        if ((input as HTMLInputElement).value) completedFields += 1;
+      });
+
+      // Ingresses
+      ingresses.forEach(ingress => {
+        totalFields += 3; // name, service, port
+        if (ingress.name) completedFields += 1;
+        if (ingress.service) completedFields += 1;
+        if (ingress.port) completedFields += 1;
+      });
+
+      // Environment
+      totalFields += 1;
+      const envSelect = document.querySelector('[placeholder="Select environment"]');
+      if ((envSelect as HTMLSelectElement)?.value) completedFields += 1;
+
+      // Resource Quotas (5 fields per environment * 3 environments)
+      totalFields += 15;
+      const quotaInputs = document.querySelectorAll('[placeholder*="vCPU"], [placeholder*="RAM"], [placeholder*="Storage"], [placeholder*="PVCs"], [placeholder*="Nodeports"]');
+      quotaInputs.forEach(input => {
+        if ((input as HTMLInputElement).value) completedFields += 1;
+      });
+
+      return Math.round((completedFields / totalFields) * 100);
+    };
+
     const updateProgress = () => {
       setProgress(calculateProgress());
     };
@@ -167,7 +166,9 @@ export function DeployForm({ onCancel }: DeployFormProps) {
     }
 
     return () => observer.disconnect();
-  }, [ingresses, calculateProgress]);
+  }, [ingresses, templateSource.value]);
+
+  const [progress, setProgress] = useState(0);
 
   // 原有的 Environment 部分
   const renderEnvironmentSection = () => (
@@ -1045,7 +1046,7 @@ export function DeployForm({ onCancel }: DeployFormProps) {
                               <TooltipContent>
                                 <p className="max-w-xs">
                                   Controls whether ArgoCD should automatically create the target namespace
-                                  if it doesn't exist in the cluster. When disabled, deployment will fail
+                                  if it doesn&apos;t exist in the cluster. When disabled, deployment will fail
                                   if namespace is missing.
                                 </p>
                               </TooltipContent>

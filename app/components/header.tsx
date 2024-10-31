@@ -25,6 +25,8 @@ interface HeaderProps {
 }
 
 export default function Header({ isLoggedIn, username, userRole, onLogout }: HeaderProps) {
+  const githubRepoUrl = "https://github.com/h4-poc/dashboard";
+
   return (
     <header className="bg-background border-b border-border">
       <div className="w-full px-6 py-4 flex justify-between items-center">
@@ -42,10 +44,15 @@ export default function Header({ isLoggedIn, username, userRole, onLogout }: Hea
               <Button variant="ghost" size="sm" className="text-base">
                 Docs
               </Button>
-              <Button variant="ghost" size="sm" className="text-base">
-                <Github className="mr-3 h-5 w-5"/>
+              <a
+                href={githubRepoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center text-base"
+              >
+                <Github className="mr-3 h-5 w-5" />
                 GitHub
-              </Button>
+              </a>
               <Link href="/login" passHref>
                 <Button variant="default" size="sm" className="text-base px-6">
                   Login
