@@ -20,6 +20,8 @@ export interface Repository {
 export interface TemplateSource {
   type: 'builtin' | 'external';
   value: string;
+  instanceName?: string;
+  targetRevision?: string;
 }
 
 // 修改 fieldDescriptions 的导出

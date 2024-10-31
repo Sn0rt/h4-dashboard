@@ -53,7 +53,8 @@ export function DeployForm({ onCancel }: DeployFormProps) {
   const [validationStatus, setValidationStatus] = useState<'success' | 'error' | 'loading' | null>(null);
   const [templateSource, setTemplateSource] = useState<TemplateSource>({
     type: 'builtin',
-    value: ''
+    value: '',
+    instanceName: ''
   });
 
   // 添选中集群状态
@@ -309,7 +310,6 @@ export function DeployForm({ onCancel }: DeployFormProps) {
     }
   };
 
-  // 在 DeployForm 组件中添加新的状态
   const [enableExternalSecret, setEnableExternalSecret] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<string>('');
 
@@ -424,27 +424,109 @@ export function DeployForm({ onCancel }: DeployFormProps) {
                 </TabsContent>
 
                 <TabsContent value="external" className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-medium">External Template URL</Label>
-                      {templateSource.value && (
-                        <span className="text-sm text-green-500 flex items-center space-x-1">
-                          <CheckCircle className="h-4 w-4" />
-                          <span>URL provided</span>
-                        </span>
+                  <div className="space-y-4">
+                    {/* Repository URL Input */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base font-medium">External Template URL</Label>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <HelpCircle className="h-4 w-4 text-gray-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="space-y-2 max-w-xs">
+                                <p>Supported URL formats:</p>
+                                <ul className="list-disc pl-4 text-sm">
+                                  <li>HTTPS: https://github.com/user/repo.git</li>
+                                  <li>SSH: git@github.com:user/repo.git</li>
+                                </ul>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <Input
+                        id="externalTemplate"
+                        placeholder="Enter template URL (e.g., https://github.com/user/repo.git)"
+                        value={templateSource.value}
+                        onChange={(e) =>
+                          setTemplateSource({ ...templateSource, value: e.target.value })
+                        }
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Target Revision Input */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base font-medium">Target Revision</Label>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <HelpCircle className="h-4 w-4 text-gray-400" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="space-y-2 max-w-xs">
+                                <p>Supported revision formats:</p>
+                                <ul className="list-disc pl-4 text-sm">
+                                  <li>Branch name (e.g., main, develop)</li>
+                                  <li>Commit hash (e.g., 1a2b3c4)</li>
+                                  <li>Tag (e.g., v1.0.0)</li>
+                                </ul>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <Input
+                        id="targetRevision"
+                        placeholder="Enter target revision (branch, commit hash, or tag)"
+                        value={templateSource.targetRevision}
+                        onChange={(e) =>
+                          setTemplateSource({ ...templateSource, targetRevision: e.target.value })
+                        }
+                        className="w-full"
+                      />
+                      {templateSource.targetRevision && (
+                        <p className="text-sm text-gray-500">
+                          Your template will be synced from: {templateSource.targetRevision}
+                        </p>
                       )}
                     </div>
-                    <Input
-                      id="externalTemplate"
-                      placeholder="Enter template URL (e.g., https://github.com/user/repo)"
-                      value={templateSource.value}
-                      onChange={(e) =>
-                        setTemplateSource({ ...templateSource, value: e.target.value })
-                      }
-                      className="w-full"
-                    />
+
+                    {/* Instance Name Input (when URL is provided) */}
+                    {templateSource.value && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="externalInstanceName" className="text-base font-medium">
+                            Instance Name
+                          </Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">Provide a unique name for this external template instance</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        <Input
+                          id="externalInstanceName"
+                          placeholder="Enter instance name"
+                          value={templateSource.instanceName}
+                          onChange={(e) =>
+                            setTemplateSource({ ...templateSource, instanceName: e.target.value })
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Enter the URL of your template repository. Supports Git repositories and Helm charts.
+                      Enter the URL and target revision of your template repository. The platform will sync the template from the specified revision.
                     </p>
                   </div>
                 </TabsContent>
@@ -468,8 +550,39 @@ export function DeployForm({ onCancel }: DeployFormProps) {
               </p>
             </CardHeader>
             <CardContent className="p-6">
-              {/* Keep existing configuration sections */}
               <div className="space-y-8">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="instanceName" className="text-base font-medium">
+                      ArgoCD Application Name
+                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">Provide a unique name for this template instance. This name will be used to identify your deployment.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="instanceName"
+                    placeholder="Enter ArgoCD application name"
+                    value={templateSource.instanceName}
+                    onChange={(e) =>
+                      setTemplateSource({ ...templateSource, instanceName: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                  {templateSource.instanceName && (
+                    <p className="text-sm text-gray-500">
+                      Your template will be instantiated as: {templateSource.instanceName}
+                    </p>
+                  )}
+                </div>
+
                 {/* Basic Information */}
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
