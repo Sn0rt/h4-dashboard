@@ -12,7 +12,7 @@ import { NetworkMenu } from './components/Network';
 import { ResourcePool } from './components/ResourcePool';
 import { Security } from './components/Security';
 import { Breadcrumb } from "@/app/components/Breadcrumb";
-import Header from '@/app/components/header'; // 导入 Header 组件
+import Header from '@/app/components/header';
 import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent } from "@/components/ui/select"
 
@@ -58,6 +58,7 @@ export default function DashboardPage() {
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['Deploy']);
   const [username, setUsername] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [selectedAppName, setSelectedAppName] = useState<string | null>(null);
 
   const toggleMenu = (title: string) => {
     setExpandedMenus(prev =>
@@ -93,35 +94,91 @@ export default function DashboardPage() {
 
   const getBreadcrumbItems = () => {
     const baseBreadcrumbItems = [
-      { label: 'Dashboard', href: '/dashboard' },
+      {
+        label: 'Dashboard',
+        href: '/dashboard',
+        onClick: () => {
+          setActiveMenu('Deploy');
+          setActiveSubMenu('ArgoApplication');
+          setSelectedAppName(null);
+        }
+      },
     ];
 
     switch (activeMenu) {
       case 'Deploy':
-        return [
-          ...baseBreadcrumbItems,
-          { label: 'Deploy', href: '/dashboard' },
-          { label: activeSubMenu, href: '/dashboard' }
+        const deployItems = [
+          {
+            label: 'Deploy',
+            href: '/dashboard',
+            onClick: () => {
+              setActiveMenu('Deploy');
+              setActiveSubMenu('ArgoApplication');
+              setSelectedAppName(null);
+            }
+          },
+          {
+            label: activeSubMenu,
+            href: '/dashboard',
+            onClick: () => {
+              setActiveSubMenu(activeSubMenu);
+              setSelectedAppName(null);
+            }
+          }
         ];
+
+        if (selectedAppName) {
+          deployItems.push({
+            label: selectedAppName,
+            href: '/dashboard',
+            onClick: () => {}
+          });
+        }
+
+        return [...baseBreadcrumbItems, ...deployItems];
       case 'Security':
         return [
           ...baseBreadcrumbItems,
-          { label: 'Security', href: '/dashboard' }
+          {
+            label: 'Security',
+            href: '/dashboard',
+            onClick: () => {
+              setActiveMenu('Security');
+            }
+          }
         ];
       case 'ResourcePool':
         return [
           ...baseBreadcrumbItems,
-          { label: 'ResourcePool', href: '/dashboard' }
+          {
+            label: 'ResourcePool',
+            href: '/dashboard',
+            onClick: () => {
+              setActiveMenu('ResourcePool');
+            }
+          }
         ];
       case 'Network':
         return [
           ...baseBreadcrumbItems,
-          { label: 'Network', href: '/dashboard' }
+          {
+            label: 'Network',
+            href: '/dashboard',
+            onClick: () => {
+              setActiveMenu('Network');
+            }
+          }
         ];
       case 'Bill':
         return [
           ...baseBreadcrumbItems,
-          { label: 'Bill', href: '/dashboard' }
+          {
+            label: 'Bill',
+            href: '/dashboard',
+            onClick: () => {
+              setActiveMenu('Bill');
+            }
+          }
         ];
       default:
         return baseBreadcrumbItems;
@@ -131,7 +188,10 @@ export default function DashboardPage() {
   const renderContent = () => {
     switch (activeMenu) {
       case 'Deploy':
-        return <Argo activeSubMenu={activeSubMenu} />;
+        return <Argo
+          activeSubMenu={activeSubMenu}
+          onSelectApp={(appName: string) => setSelectedAppName(appName)}
+        />;
       case 'Security':
         return <Security activeSubMenu={activeSubMenu} />;
       case 'ResourcePool':
@@ -236,7 +296,14 @@ export default function DashboardPage() {
     <div className="flex flex-col h-screen bg-background text-foreground">
       <Header isLoggedIn={isLoggedIn} username={username} userRole={localStorage.getItem('userRole') ?? undefined} onLogout={handleLogout} /> {/* 使用 Header 组件 */}
       <div className="px-6 py-2 border-b border-border">
-        <Breadcrumb items={getBreadcrumbItems()} />
+        <Breadcrumb
+          items={getBreadcrumbItems()}
+          onNavigate={(item) => {
+            if (item.onClick) {
+              item.onClick();
+            }
+          }}
+        />
       </div>
       <div className="flex flex-1 overflow-hidden">
         <aside className={`${
@@ -264,7 +331,9 @@ export default function DashboardPage() {
                       variant={activeMenu === item.title ? "secondary" : "ghost"}
                       className={`w-full justify-between px-4 py-3 hover:bg-accent hover:text-accent-foreground
                         ${activeMenu === item.title ? 'bg-secondary/50 shadow-sm font-medium' : 'text-muted-foreground'}
-                        rounded-lg transition-all duration-200 ease-in-out group`}
+                        rounded-lg transition-all duration-200 ease-in-out group ${
+                          isSidebarCollapsed ? 'justify-center' : ''
+                        }`}
                       onClick={() => {
                         setActiveMenu(item.title)
                         if (item.subItems.length > 0 && !isSidebarCollapsed) {
@@ -273,7 +342,9 @@ export default function DashboardPage() {
                         }
                       }}
                     >
-                      <span className="flex items-center text-sm">
+                      <span className={`flex items-center text-sm ${
+                        isSidebarCollapsed ? 'justify-center' : ''
+                      }`}>
                         <item.icon className={`h-4 w-4 transition-colors
                           ${activeMenu === item.title ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
                         />
@@ -326,12 +397,16 @@ export default function DashboardPage() {
               variant={activeMenu === settingsItem.title ? "secondary" : "ghost"}
               className={`w-full justify-start px-4 py-3 hover:bg-accent hover:text-accent-foreground
                 ${activeMenu === settingsItem.title ? 'bg-secondary/50 shadow-sm font-medium' : 'text-muted-foreground'}
-                rounded-lg transition-all duration-200 ease-in-out group`}
+                rounded-lg transition-all duration-200 ease-in-out group ${
+                  isSidebarCollapsed ? 'justify-center' : ''
+                }`}
               onClick={() => {
                 setActiveMenu(settingsItem.title)
               }}
             >
-              <span className="flex items-center text-sm">
+              <span className={`flex items-center text-sm ${
+                isSidebarCollapsed ? 'justify-center' : ''
+              }`}>
                 <settingsItem.icon className={`h-4 w-4 transition-colors
                   ${activeMenu === settingsItem.title ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}`}
                 />

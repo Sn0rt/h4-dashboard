@@ -3,26 +3,199 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, ChevronUp, Check, AlertCircle, Clock, CheckCircle, XCircle } from "lucide-react"
+import { ChevronDown, ChevronUp, Check, AlertCircle, Clock, CheckCircle, XCircle, ChevronLeft, FileText, BarChart, History, ExternalLink, Pause } from "lucide-react"
 import { Application, WorkflowTemplate, Workflow } from '../interfaces';
 import { Trash2, RefreshCw, Plus } from "lucide-react"
 import { DeployForm } from '@/app/components/deploy';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ChevronRight } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // 如果 ../interfaces 文件中没有定义 status，可以在这里扩展接口
 interface ExtendedApplication extends Application {
   status: 'Synced' | 'OutOfSync' | 'Unknown' | 'Progressing' | 'Degraded';
   resources: {
-    cpu: string;
-    memory: string;
-    storage: string;
-    pods: number;
+    [cluster: string]: {
+      cpu: string;
+      memory: string;
+      storage: string;
+      pods: number;
+    };
   };
   worklog: {
     date: string;
     action: string;
     user: string;
   }[];
+  remoteRepo: {
+    url: string;
+    branch: string;
+    baseCommitUrl: string;
+    latestCommit: {
+      id: string;
+      message: string;
+      author: string;
+      timestamp: string;
+    };
+  };
+  deployedEnvironments: string[];
+  health: {
+    status: 'Healthy' | 'Degraded' | 'Progressing' | 'Suspended' | 'Missing';
+    message?: string;
+  };
+  argocdUrl: string;
 }
+
+// 添加发布历史的接口
+interface ReleaseHistory {
+  commitLog: string;
+  commitHash: string;
+  commitAuthor: string;
+  operator: string;
+  releaseDate: string;
+  isCurrent: boolean;
+  status: 'success' | 'failed' | 'in-progress';
+  deploymentDetails?: {
+    duration: string;
+    podReplicas: string;
+    configChanges: string[];
+  };
+}
+
+// 更新 releaseHistories 的 mock 数据
+const releaseHistories: Record<string, ReleaseHistory[]> = {
+  SIT: [
+    {
+      commitLog: "feat(auth): add OIDC authentication support",
+      commitHash: "a1b2c3d4e5f6g7h8i9j0",
+      commitAuthor: "Alice Smith",
+      operator: "John Doe",
+      releaseDate: "2024-03-20 14:30:00",
+      isCurrent: true,
+      status: 'success',
+      deploymentDetails: {
+        duration: "2m 30s",
+        podReplicas: "3/3",
+        configChanges: [
+          "feat: integrate OIDC provider configuration",
+          "feat: add authentication middleware",
+          "chore: update dependencies for OIDC support"
+        ]
+      }
+    },
+    {
+      commitLog: "fix(api): resolve memory leak in connection pool",
+      commitHash: "b2c3d4e5f6g7h8i9j0k",
+      commitAuthor: "Bob Johnson",
+      operator: "Jane Smith",
+      releaseDate: "2024-03-19 11:20:00",
+      isCurrent: false,
+      status: 'success',
+      deploymentDetails: {
+        duration: "1m 45s",
+        podReplicas: "3/3",
+        configChanges: [
+          "fix: implement connection pool cleanup",
+          "test: add memory leak test cases"
+        ]
+      }
+    },
+    {
+      commitLog: "feat(metrics): implement custom prometheus metrics",
+      commitHash: "c3d4e5f6g7h8i9j0k1l",
+      commitAuthor: "Charlie Wilson",
+      operator: "Charlie Wilson",
+      releaseDate: "2024-03-18 09:15:00",
+      isCurrent: false,
+      status: 'success',
+      deploymentDetails: {
+        duration: "2m 15s",
+        podReplicas: "3/3",
+        configChanges: [
+          "feat: add custom metrics endpoints",
+          "docs: update metrics documentation"
+        ]
+      }
+    },
+    {
+      commitLog: "refactor(core): optimize database queries",
+      commitHash: "d4e5f6g7h8i9j0k1l2m",
+      commitAuthor: "David Lee",
+      operator: "Alice Smith",
+      releaseDate: "2024-03-17 16:45:00",
+      isCurrent: false,
+      status: 'success',
+      deploymentDetails: {
+        duration: "1m 30s",
+        podReplicas: "3/3",
+        configChanges: [
+          "perf: implement query caching",
+          "refactor: optimize SQL joins"
+        ]
+      }
+    },
+    {
+      commitLog: "fix(security): update vulnerable dependencies",
+      commitHash: "e5f6g7h8i9j0k1l2m3n",
+      commitAuthor: "Eve Brown",
+      operator: "John Doe",
+      releaseDate: "2024-03-16 13:20:00",
+      isCurrent: false,
+      status: 'success',
+      deploymentDetails: {
+        duration: "1m 15s",
+        podReplicas: "3/3",
+        configChanges: [
+          "fix: upgrade dependencies versions",
+          "test: add security test cases"
+        ]
+      }
+    },
+    {
+      commitLog: "feat(ui): implement new dashboard components",
+      commitHash: "f6g7h8i9j0k1l2m3n4o",
+      commitAuthor: "Frank White",
+      operator: "Frank White",
+      releaseDate: "2024-03-15 10:30:00",
+      isCurrent: false,
+      status: 'success',
+      deploymentDetails: {
+        duration: "2m 00s",
+        podReplicas: "3/3",
+        configChanges: [
+          "feat: add new chart components",
+          "style: update theme colors"
+        ]
+      }
+    },
+    {
+      commitLog: "chore(deps): upgrade kubernetes client version",
+      commitHash: "g7h8i9j0k1l2m3n4o5p",
+      commitAuthor: "Grace Taylor",
+      operator: "Bob Johnson",
+      releaseDate: "2024-03-14 15:45:00",
+      isCurrent: false,
+      status: 'success',
+      deploymentDetails: {
+        duration: "1m 45s",
+        podReplicas: "3/3",
+        configChanges: [
+          "chore: update k8s client to v1.28",
+          "test: update integration tests"
+        ]
+      }
+    }
+  ],
+  UAT: [
+    // ... 类似地添加 UAT 环境的历史记录
+  ],
+  PRD: [
+    // ... 类似地添加 PRD 环境的历史记录
+  ]
+};
 
 // 将 applications 数组的类型更新为 ExtendedApplication[]
 const applications: ExtendedApplication[] = [
@@ -31,71 +204,226 @@ const applications: ExtendedApplication[] = [
     creator: 'Alice Smith', lastUpdater: 'Bob Johnson', lastCommitId: 'abc123', lastCommitLog: 'Updated dependencies',
     podCount: 3, cpuCount: '2 cores', memoryAmount: '4Gi', secretCount: 2, status: 'Synced',
     resources: {
-      cpu: '200m',
-      memory: '256Mi',
-      storage: '1Gi',
-      pods: 2
+      SIT: {
+        cpu: '200m',
+        memory: '256Mi',
+        storage: '1Gi',
+        pods: 2
+      },
+      UAT: {
+        cpu: '300m',
+        memory: '512Mi',
+        storage: '2Gi',
+        pods: 3
+      },
+      PRD: {
+        cpu: '500m',
+        memory: '1Gi',
+        storage: '5Gi',
+        pods: 5
+      }
     },
     worklog: [
       { date: '2023-06-10', action: 'Deployment updated', user: 'John Doe' },
       { date: '2023-06-09', action: 'Config map changed', user: 'Jane Smith' },
-    ]
+    ],
+    remoteRepo: {
+      url: 'https://github.com/org/external-secret',
+      branch: 'main',
+      baseCommitUrl: 'https://github.com/org/external-secret/commit',
+      latestCommit: {
+        id: 'abc123def',
+        message: 'Update secret rotation policy',
+        author: 'John Doe',
+        timestamp: '2024-03-20T10:30:00Z'
+      }
+    },
+    deployedEnvironments: ['SIT', 'UAT', 'PRD'],
+    health: {
+      status: 'Healthy',
+      message: 'All components are running'
+    },
+    argocdUrl: 'https://argocd.example.com/applications/external-secret',
   },
   { id: 2, name: 'argo-rollout', uri: '/apps/argo-rollout', lastUpdate: '2023-04-02', owner: 'Jane Smith',
     creator: 'Charlie Wilson', lastUpdater: 'Alice Brown', lastCommitId: 'def456', lastCommitLog: 'Added new feature',
     podCount: 5, cpuCount: '4 cores', memoryAmount: '8Gi', secretCount: 3, status: 'OutOfSync',
     resources: {
-      cpu: '400m',
-      memory: '512Mi',
-      storage: '2Gi',
-      pods: 3
+      SIT: {
+        cpu: '400m',
+        memory: '512Mi',
+        storage: '2Gi',
+        pods: 3
+      },
+      UAT: {
+        cpu: '500m',
+        memory: '640Mi',
+        storage: '2.5Gi',
+        pods: 4
+      },
+      PRD: {
+        cpu: '600m',
+        memory: '768Mi',
+        storage: '3Gi',
+        pods: 5
+      }
     },
     worklog: [
       { date: '2023-06-08', action: 'Rollout updated', user: 'Charlie Wilson' },
       { date: '2023-06-07', action: 'Service changed', user: 'Alice Brown' },
-    ]
+    ],
+    remoteRepo: {
+      url: 'https://github.com/org/argo-rollout',
+      branch: 'main',
+      baseCommitUrl: 'https://github.com/org/argo-rollout/commit',
+      latestCommit: {
+        id: 'def456ghi',
+        message: 'Add new feature',
+        author: 'Charlie Wilson',
+        timestamp: '2024-03-19T10:30:00Z'
+      }
+    },
+    deployedEnvironments: ['SIT', 'UAT'],
+    health: {
+      status: 'Healthy',
+      message: 'All components are running'
+    },
+    argocdUrl: 'https://argocd.example.com/applications/argo-rollout',
   },
   { id: 3, name: 'kube-dashboard', uri: '/apps/kube-dashboard', lastUpdate: '2023-04-03', owner: 'Bob Johnson',
     creator: 'John Doe', lastUpdater: 'Charlie Wilson', lastCommitId: 'ghi789', lastCommitLog: 'Fixed bug',
     podCount: 2, cpuCount: '1 core', memoryAmount: '2Gi', secretCount: 1, status: 'Progressing',
     resources: {
-      cpu: '100m',
-      memory: '128Mi',
-      storage: '512Mi',
-      pods: 1
+      SIT: {
+        cpu: '100m',
+        memory: '128Mi',
+        storage: '512Mi',
+        pods: 1
+      },
+      UAT: {
+        cpu: '150m',
+        memory: '192Mi',
+        storage: '640Mi',
+        pods: 2
+      },
+      PRD: {
+        cpu: '200m',
+        memory: '256Mi',
+        storage: '768Mi',
+        pods: 3
+      }
     },
     worklog: [
       { date: '2023-06-06', action: 'Dashboard updated', user: 'Bob Johnson' },
       { date: '2023-06-05', action: 'Config changed', user: 'John Doe' },
-    ]
+    ],
+    remoteRepo: {
+      url: 'https://github.com/org/kube-dashboard',
+      branch: 'main',
+      baseCommitUrl: 'https://github.com/org/kube-dashboard/commit',
+      latestCommit: {
+        id: 'ghi789jkl',
+        message: 'Fixed bug',
+        author: 'Bob Johnson',
+        timestamp: '2024-03-15T10:30:00Z'
+      }
+    },
+    deployedEnvironments: ['SIT', 'UAT'],
+    health: {
+      status: 'Healthy',
+      message: 'All components are running'
+    },
+    argocdUrl: 'https://argocd.example.com/applications/kube-dashboard',
   },
   { id: 4, name: 'ray', uri: '/apps/ray', lastUpdate: '2023-04-04', owner: 'Alice Brown',
     creator: 'Jane Smith', lastUpdater: 'Bob Johnson', lastCommitId: 'jkl012', lastCommitLog: 'Refactored code',
     podCount: 4, cpuCount: '2 cores', memoryAmount: '4Gi', secretCount: 2, status: 'Unknown',
     resources: {
-      cpu: '300m',
-      memory: '384Mi',
-      storage: '1Gi',
-      pods: 2
+      SIT: {
+        cpu: '300m',
+        memory: '384Mi',
+        storage: '1Gi',
+        pods: 2
+      },
+      UAT: {
+        cpu: '400m',
+        memory: '480Mi',
+        storage: '1.2Gi',
+        pods: 3
+      },
+      PRD: {
+        cpu: '500m',
+        memory: '576Mi',
+        storage: '1.5Gi',
+        pods: 4
+      }
     },
     worklog: [
       { date: '2023-06-04', action: 'Ray updated', user: 'Alice Brown' },
       { date: '2023-06-03', action: 'Config changed', user: 'Jane Smith' },
-    ]
+    ],
+    remoteRepo: {
+      url: 'https://github.com/org/ray',
+      branch: 'main',
+      baseCommitUrl: 'https://github.com/org/ray/commit',
+      latestCommit: {
+        id: 'jkl012mno',
+        message: 'Refactored code',
+        author: 'Alice Brown',
+        timestamp: '2024-03-14T10:30:00Z'
+      }
+    },
+    deployedEnvironments: ['SIT', 'UAT'],
+    health: {
+      status: 'Healthy',
+      message: 'All components are running'
+    },
+    argocdUrl: 'https://argocd.example.com/applications/ray',
   },
   { id: 5, name: 'tidb', uri: '/apps/tidb', lastUpdate: '2023-04-05', owner: 'Charlie Wilson',
     creator: 'Alice Smith', lastUpdater: 'John Doe', lastCommitId: 'mno345', lastCommitLog: 'Improved performance',
     podCount: 6, cpuCount: '3 cores', memoryAmount: '6Gi', secretCount: 4, status: 'Degraded',
     resources: {
-      cpu: '600m',
-      memory: '768Mi',
-      storage: '2Gi',
-      pods: 4
+      SIT: {
+        cpu: '600m',
+        memory: '768Mi',
+        storage: '2Gi',
+        pods: 4
+      },
+      UAT: {
+        cpu: '700m',
+        memory: '896Mi',
+        storage: '2.5Gi',
+        pods: 5
+      },
+      PRD: {
+        cpu: '800m',
+        memory: '1024Mi',
+        storage: '3Gi',
+        pods: 6
+      }
     },
     worklog: [
       { date: '2023-06-02', action: 'TiDB updated', user: 'Charlie Wilson' },
       { date: '2023-06-01', action: 'Config changed', user: 'Alice Smith' },
-    ]
+    ],
+    remoteRepo: {
+      url: 'https://github.com/org/tidb',
+      branch: 'main',
+      baseCommitUrl: 'https://github.com/org/tidb/commit',
+      latestCommit: {
+        id: 'mno345pqr',
+        message: 'Improved performance',
+        author: 'Charlie Wilson',
+        timestamp: '2024-03-13T10:30:00Z'
+      }
+    },
+    deployedEnvironments: ['SIT', 'UAT'],
+    health: {
+      status: 'Healthy',
+      message: 'All components are running'
+    },
+    argocdUrl: 'https://argocd.example.com/applications/tidb',
   },
 ];
 
@@ -114,20 +442,395 @@ const getStatusIcon = (status: string) => {
   }
 };
 
-export function ArgoResource({ activeSubMenu }: { activeSubMenu: string }) {
-  const [selectedApps, setSelectedApps] = useState<number[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [expandedApp, setExpandedApp] = useState<number | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
-  const [selectedAppDetails, setSelectedAppDetails] = useState<ExtendedApplication | null>(null)
+const getHealthIcon = (health: ExtendedApplication['health']) => {
+  switch (health.status) {
+    case 'Healthy':
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
+    case 'Degraded':
+      return <XCircle className="h-4 w-4 text-red-500" />;
+    case 'Progressing':
+      return <Clock className="h-4 w-4 text-blue-500" />;
+    case 'Suspended':
+      return <Pause className="h-4 w-4 text-yellow-500" />;
+    default:
+      return <AlertCircle className="h-4 w-4 text-gray-500" />;
+  }
+};
+
+interface ArgoResourceProps {
+  activeSubMenu: string;
+  onSelectApp: (appName: string) => void;
+}
+
+export function ArgoResource({ activeSubMenu, onSelectApp }: ArgoResourceProps) {
+  const [selectedApps, setSelectedApps] = useState<number[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedApp, setExpandedApp] = useState<number | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [selectedAppDetails, setSelectedAppDetails] = useState<ExtendedApplication | null>(null);
+  const [activeTab, setActiveTab] = useState('SIT');
+
+  const renderApplicationDetail = (app: ExtendedApplication) => {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        {/* Header Section - 简化标题，只保留应用名称 */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
+            {app.name}
+          </h1>
+          <Button variant="outline" onClick={() => setSelectedAppDetails(null)}>
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Back to List
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* ArgoCD Deployment Status Card - 新增 */}
+          <Card className="col-span-3 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5 text-blue-500" />
+                <span>ArgoCD Deployment Status</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {/* Sync Status */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-500">Sync Status</p>
+                  <div className="flex items-center space-x-2">
+                    {getStatusIcon(app.status)}
+                    <span className="font-medium">{app.status}</span>
+                  </div>
+                </div>
+
+                {/* Health Status */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-500">Health Status</p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="flex items-center space-x-2">
+                          {getHealthIcon(app.health)}
+                          <span className="font-medium">{app.health.status}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{app.health.message}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+
+                {/* Deployed Environments */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-500">Deployed Environments</p>
+                  <div className="flex flex-wrap gap-2">
+                    {app.deployedEnvironments.map((env) => (
+                      <span
+                        key={env}
+                        className="px-2 py-1 text-sm rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                      >
+                        {env}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ArgoCD Link */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-500">ArgoCD Console</p>
+                  <a
+                    href={app.argocdUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 text-blue-500 hover:text-blue-600 hover:underline"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span>View in ArgoCD</span>
+                  </a>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* General Information Card - 保持原有的仓库信息 */}
+          <Card className="col-span-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5 text-blue-500" />
+                <span>General Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Owner</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="bg-blue-100 text-blue-600">
+                          {app.owner.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{app.owner}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Update</p>
+                    <p className="mt-1">{new Date(app.lastUpdate).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Remote Repository Section */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Remote Repository</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Repository URL</span>
+                    <a
+                      href={app.remoteRepo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-500 hover:text-blue-600 font-mono"
+                    >
+                      {app.remoteRepo.url}
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Branch</span>
+                    <span className="text-sm font-medium">{app.remoteRepo.branch}</span>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Latest Commit</span>
+                      <code className="px-2 py-1 bg-gray-100 dark:bg-gray-900 rounded text-xs">
+                        {app.remoteRepo.latestCommit.id}
+                      </code>
+                    </div>
+                    <p className="text-sm">{app.remoteRepo.latestCommit.message}</p>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{app.remoteRepo.latestCommit.author}</span>
+                      <time>{new Date(app.remoteRepo.latestCommit.timestamp).toLocaleString()}</time>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Resource Metrics Card */}
+          <Card className="bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart className="h-5 w-5 text-purple-500" />
+                <span>Resource Metrics</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue={app.deployedEnvironments[0]}>
+                <TabsList className="grid w-full grid-cols-3 mb-6">
+                  {app.deployedEnvironments.map((env) => (
+                    <TabsTrigger key={env} value={env}>
+                      {env}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {app.deployedEnvironments.map((env) => (
+                  <TabsContent key={env} value={env} className="space-y-6">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">CPU Usage</span>
+                        <span className="font-medium">{app.resources[env].cpu}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-purple-500 rounded-full" style={{ width: '60%' }} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Memory Usage</span>
+                        <span className="font-medium">{app.resources[env].memory}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 rounded-full" style={{ width: '45%' }} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Storage Usage</span>
+                        <span className="font-medium">{app.resources[env].storage}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: '30%' }} />
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                          <p className="text-2xl font-bold text-blue-500">{app.resources[env].pods}</p>
+                          <p className="text-sm text-gray-500">Active Pods</p>
+                        </div>
+                        <div className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                          <p className="text-2xl font-bold text-green-500">{app.secretCount}</p>
+                          <p className="text-sm text-gray-500">Secrets</p>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          {/* Release History Card */}
+          <Card className="col-span-3 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <History className="h-5 w-5 text-green-500" />
+                <span>Release History and Rollback</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue={app.deployedEnvironments[0]}>
+                <TabsList className="grid w-full grid-cols-3 mb-6">
+                  {app.deployedEnvironments.map((env) => (
+                    <TabsTrigger key={env} value={env}>
+                      {env}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {app.deployedEnvironments.map((env) => (
+                  <TabsContent key={env} value={env}>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50 dark:bg-gray-800">
+                          <TableHead>Commit Log</TableHead>
+                          <TableHead>Commit Hash</TableHead>
+                          <TableHead>Commit Author</TableHead>
+                          <TableHead>Operator</TableHead>
+                          <TableHead>Release Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {releaseHistories[env].map((release, index) => (
+                          <TableRow
+                            key={index}
+                            className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                              release.isCurrent ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
+                            }`}
+                          >
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="font-medium">{release.commitLog}</div>
+                                {release.deploymentDetails && (
+                                  <div className="text-xs text-gray-500">
+                                    Duration: {release.deploymentDetails.duration} | Replicas: {release.deploymentDetails.podReplicas}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <a
+                                href={`${app.remoteRepo.baseCommitUrl}/${release.commitHash}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex items-center space-x-1 text-sm"
+                              >
+                                <code className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-blue-600 hover:text-blue-700 transition-colors">
+                                  {release.commitHash.substring(0, 7)}
+                                </code>
+                                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all" />
+                              </a>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                                    {release.commitAuthor.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{release.commitAuthor}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback className="bg-purple-100 text-purple-600 text-xs">
+                                    {release.operator.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{release.operator}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <time className="text-gray-500">
+                                {new Date(release.releaseDate).toLocaleString()}
+                              </time>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                {release.status === 'success' ? (
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                ) : release.status === 'failed' ? (
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                ) : (
+                                  <Clock className="h-4 w-4 text-blue-500" />
+                                )}
+                                <span className={
+                                  release.status === 'success' ? 'text-green-600' :
+                                  release.status === 'failed' ? 'text-red-600' : 'text-blue-600'
+                                }>
+                                  {release.status.charAt(0).toUpperCase() + release.status.slice(1)}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={release.isCurrent}
+                                className={`w-full ${
+                                  release.isCurrent
+                                    ? 'cursor-not-allowed opacity-50'
+                                    : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30'
+                                }`}
+                                onClick={() => {
+                                  if (!release.isCurrent) {
+                                    console.log(`Rolling back to ${release.commitHash} in ${env}`);
+                                  }
+                                }}
+                              >
+                                {release.isCurrent ? 'Current' : 'Rollback'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
 
   const handleAppSelect = (appId: number) => {
     setSelectedApps(prev =>
       prev.includes(appId)
         ? prev.filter(id => id !== appId)
         : [...prev, appId]
-    )
-  }
+    );
+  };
 
   const toggleAppExpansion = (appId: number) => {
     setExpandedApp(expandedApp === appId ? null : appId);
@@ -136,128 +839,11 @@ export function ArgoResource({ activeSubMenu }: { activeSubMenu: string }) {
   const filteredApps = applications.filter(app =>
     app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     app.owner.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  );
 
   const handleAppClick = (app: ExtendedApplication) => {
     setSelectedAppDetails(app);
-  };
-
-  const renderApplicationDetail = (app: ExtendedApplication) => {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-            Application Detail: {app.name}
-          </h1>
-          <Button variant="outline" onClick={() => setSelectedAppDetails(null)}>
-            Back to List
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="col-span-2">
-            <CardHeader>
-              <CardTitle>General Information</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Last Update</p>
-                <p className="font-medium">{app.lastUpdate}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Owner</p>
-                <p className="font-medium">{app.owner}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                <div className="flex items-center">
-                  {getStatusIcon(app.status)}
-                  <span className="ml-2 font-medium">{app.status}</span>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">ArgoCD URL</p>
-                <a href={app.uri} className="text-blue-500 hover:underline font-medium">{app.uri}</a>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Resource Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">CPU</p>
-                <p className="font-medium">{app.resources.cpu}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Memory</p>
-                <p className="font-medium">{app.resources.memory}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Storage</p>
-                <p className="font-medium">{app.resources.storage}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Pods</p>
-                <p className="font-medium">{app.resources.pods}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-3">
-            <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Creator</p>
-                <p className="font-medium">{app.creator}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Last Updater</p>
-                <p className="font-medium">{app.lastUpdater}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Last Commit ID</p>
-                <p className="font-medium">{app.lastCommitId}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Last Commit Log</p>
-                <p className="font-medium">{app.lastCommitLog}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-3">
-            <CardHeader>
-              <CardTitle>Work Log</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>User</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {app.worklog.map((log, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{log.date}</TableCell>
-                      <TableCell>{log.action}</TableCell>
-                      <TableCell>{log.user}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    onSelectApp(app.name);
   };
 
   if (isCreating) {
@@ -274,115 +860,176 @@ export function ArgoResource({ activeSubMenu }: { activeSubMenu: string }) {
     return renderApplicationDetail(selectedAppDetails);
   }
 
-  return (
+  // 主列表视图
+  const mainListView = (
     <div className="space-y-6">
+      {/* 顶部操作栏 */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Argo Resources</h1>
-        <div className="flex space-x-2">
-          <Button size="sm" onClick={() => setIsCreating(true)}>
-            <Plus className="mr-2 h-4 w-4"/>
-            Create
+        <div className="flex items-center space-x-4 flex-1">
+          <Input
+            placeholder="Search applications..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          <Button variant="outline" size="icon" onClick={() => console.log('Refresh')}>
+            <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="outline" className="hover:bg-blue-50 dark:hover:bg-blue-900">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Sync
-          </Button>
-          <Button size="sm" variant="destructive" disabled={selectedApps.length === 0} className="hover:bg-red-600">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+        </div>
+        <div className="flex items-center space-x-4">
+          <Button onClick={() => setIsCreating(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Application
           </Button>
         </div>
       </div>
 
-      <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+      {/* 应用列表 */}
+      <Card>
         <CardHeader>
-          <CardTitle>{activeSubMenu}</CardTitle>
-          {activeSubMenu === 'ArgoApplication' && (
-            <Input
-              placeholder="Search by name, label, or owner..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="mt-2 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-            />
-          )}
+          <CardTitle>Applications</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-100 dark:bg-gray-700">
-                {activeSubMenu === 'ArgoApplication' && (
-                  <>
-                    <TableHead className="w-[50px]"></TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Last Update</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>ArgoCD URL</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead></TableHead>
-                  </>
-                )}
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={selectedApps.length === filteredApps.length}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedApps(filteredApps.map(app => app.id));
+                      } else {
+                        setSelectedApps([]);
+                      }
+                    }}
+                  />
+                </TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Health</TableHead>
+                <TableHead>Repository</TableHead>
+                <TableHead>Environments</TableHead>
+                <TableHead>Last Updated</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activeSubMenu === 'ArgoApplication' && filteredApps.map((app) => (
-                <>
-                  <TableRow key={app.id}>
-                    <TableCell>
-                      <div
-                        className="w-5 h-5 border border-gray-300 flex items-center justify-center cursor-pointer"
-                        onClick={() => handleAppSelect(app.id)}
+              {filteredApps.map((app) => (
+                <TableRow key={app.id} className="hover:bg-muted/50">
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedApps.includes(app.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedApps([...selectedApps, app.id]);
+                        } else {
+                          setSelectedApps(selectedApps.filter(id => id !== app.id));
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto font-medium"
+                      onClick={() => handleAppClick(app)}
+                    >
+                      {app.name}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      {app.status === 'Synced' ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : app.status === 'OutOfSync' ? (
+                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-blue-500" />
+                      )}
+                      <span className={
+                        app.status === 'Synced' ? 'text-green-600' :
+                        app.status === 'OutOfSync' ? 'text-yellow-600' :
+                        'text-blue-600'
+                      }>
+                        {app.status}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant={
+                            app.health.status === 'Healthy' ? 'default' :
+                            app.health.status === 'Degraded' ? 'destructive' :
+                            app.health.status === 'Progressing' ? 'secondary' :
+                            'outline'
+                          }>
+                            <div className="flex items-center space-x-2">
+                              {getHealthIcon(app.health)}
+                              <span>{app.health.status}</span>
+                            </div>
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{app.health.message}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <code className="px-2 py-1 bg-muted rounded text-xs">
+                        {app.remoteRepo.branch}
+                      </code>
+                      <a
+                        href={app.remoteRepo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-muted-foreground hover:text-primary"
                       >
-                        {selectedApps.includes(app.id) && <Check className="h-4 w-4 text-primary" />}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="link" onClick={() => handleAppClick(app)}>
-                        {app.name}
-                      </Button>
-                    </TableCell>
-                    <TableCell>{app.lastUpdate}</TableCell>
-                    <TableCell>{app.owner}</TableCell>
-                    <TableCell>
-                      <a href={app.uri} className="hover:underline">
-                        {app.uri}
+                        {app.remoteRepo.url.split('/').slice(-2).join('/')}
                       </a>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(app.status)}
-                        <span>{app.status}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => toggleAppExpansion(app.id)}>
-                        {expandedApp === app.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {app.deployedEnvironments.map((env) => (
+                        <Badge
+                          key={env}
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          {env}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <time className="text-sm text-muted-foreground">
+                      {new Date(app.lastUpdate).toLocaleDateString()}
+                    </time>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => window.open(app.argocdUrl, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4" />
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                  {expandedApp === app.id && (
-                    <TableRow>
-                      <TableCell colSpan={6}>
-                        <div className="p-4 bg-gray-50 rounded-md">
-                          <h4 className="font-semibold mb-2">Additional Information</h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p><strong>Creator:</strong> {app.creator}</p>
-                              <p><strong>Last Updater:</strong> {app.lastUpdater}</p>
-                              <p><strong>Last Commit ID:</strong> {app.lastCommitId}</p>
-                              <p><strong>Last Commit Log:</strong> {app.lastCommitLog}</p>
-                            </div>
-                            <div>
-                              <p><strong>Pod Count:</strong> {app.podCount}</p>
-                              <p><strong>CPU:</strong> {app.cpuCount}</p>
-                              <p><strong>Memory:</strong> {app.memoryAmount}</p>
-                              <p><strong>Secret Count:</strong> {app.secretCount}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedAppDetails(app)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
             </TableBody>
           </Table>
@@ -390,5 +1037,7 @@ export function ArgoResource({ activeSubMenu }: { activeSubMenu: string }) {
       </Card>
     </div>
   );
+
+  return mainListView;
 }
 
