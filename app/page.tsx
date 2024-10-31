@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import Dog3D from './components/dog3d'
 import Header from './components/header'
@@ -11,6 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import { useRouter } from 'next/navigation';
 
 const features = [
   {
@@ -103,6 +106,8 @@ const faqs = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header isLoggedIn={false} />
@@ -134,6 +139,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   className="bg-primary/90 hover:bg-primary shadow-lg hover:shadow-xl transition-all duration-300 text-lg px-8"
+                  onClick={() => router.push('/login')}
                 >
                   Get Started
                 </Button>
