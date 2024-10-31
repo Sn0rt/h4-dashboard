@@ -1,16 +1,15 @@
 "use client"
 
-import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, Stage } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Stage, useGLTF } from '@react-three/drei';
 import { Suspense } from 'react';
-import { MeshStandardMaterial, Object3D, Mesh } from 'three';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { MeshStandardMaterial } from 'three';
 
 function DogModel() {
-  const obj = useLoader(OBJLoader, '/3d/dog.obj');
+  const { scene } = useGLTF('/3d/dog.glb');
 
-  obj.traverse((child: Object3D) => {
-    if (child instanceof Mesh) {
+  scene.traverse((child: any) => {
+    if (child.isMesh) {
       child.material = new MeshStandardMaterial({
         color: '#6B7280',
         roughness: 0.6,
@@ -24,7 +23,7 @@ function DogModel() {
 
   return (
     <primitive
-      object={obj}
+      object={scene}
       position={[0, -1.5, 0]}
       scale={[0.05, 0.05, 0.05]}
       rotation={[0, Math.PI / 2, 0]}
@@ -65,3 +64,6 @@ export default function Dog3D() {
     </div>
   );
 }
+
+// preload for better performance
+useGLTF.preload('/3d/dog.glb');
