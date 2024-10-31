@@ -13,8 +13,15 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ChevronRight } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreHorizontal } from "lucide-react"
 
-// 如果 ../interfaces 文件中没有定义 status，可��在这里扩展接口
+// 如果 ../interfaces 文件中没有定义 status，可在这里扩展接口
 interface ExtendedApplication extends Application {
   status: 'Synced' | 'OutOfSync' | 'Unknown' | 'Progressing' | 'Degraded';
   resources: {
@@ -65,7 +72,7 @@ interface ReleaseHistory {
   };
 }
 
-// 更新 releaseHistories 的 mock 数据
+// 修改 releaseHistories 的 mock 数据，让同一个 commit 在多个环境中都是 current
 const releaseHistories: Record<string, ReleaseHistory[]> = {
   SIT: [
     {
@@ -79,11 +86,7 @@ const releaseHistories: Record<string, ReleaseHistory[]> = {
       deploymentDetails: {
         duration: "2m 30s",
         podReplicas: "3/3",
-        configChanges: [
-          "feat: integrate OIDC provider configuration",
-          "feat: add authentication middleware",
-          "chore: update dependencies for OIDC support"
-        ]
+        configChanges: []
       }
     },
     {
@@ -190,10 +193,36 @@ const releaseHistories: Record<string, ReleaseHistory[]> = {
     }
   ],
   UAT: [
-    // ... 类似地添加 UAT 环境的历史记录
+    {
+      commitLog: "feat(auth): add OIDC authentication support",
+      commitHash: "a1b2c3d4e5f6g7h8i9j0",
+      commitAuthor: "Alice Smith",
+      operator: "John Doe",
+      releaseDate: "2024-03-20 14:30:00",
+      isCurrent: true,
+      status: 'success',
+      deploymentDetails: {
+        duration: "2m 30s",
+        podReplicas: "3/3",
+        configChanges: []
+      }
+    }
   ],
   PRD: [
-    // ... 类似地添加 PRD 环境的历史记录
+    {
+      commitLog: "feat(auth): add OIDC authentication support",
+      commitHash: "a1b2c3d4e5f6g7h8i9j0",
+      commitAuthor: "Alice Smith",
+      operator: "John Doe",
+      releaseDate: "2024-03-20 14:30:00",
+      isCurrent: true,
+      status: 'success',
+      deploymentDetails: {
+        duration: "2m 30s",
+        podReplicas: "3/3",
+        configChanges: []
+      }
+    }
   ]
 };
 
@@ -470,6 +499,31 @@ export function ArgoResource({ activeSubMenu, onSelectApp }: ArgoResourceProps) 
   const [selectedAppDetails, setSelectedAppDetails] = useState<ExtendedApplication | null>(null);
   const [activeTab, setActiveTab] = useState('SIT');
 
+  // 修改 currentCommits 的初始化，添加可选链和默认值
+  const [currentCommits, setCurrentCommits] = useState<Record<string, string>>({
+    SIT: releaseHistories.SIT?.[0]?.commitHash || '',
+    UAT: releaseHistories.UAT?.[0]?.commitHash || '',
+    PRD: releaseHistories.PRD?.[0]?.commitHash || ''
+  });
+
+  // 添加 rollback 处理函数
+  const handleRollback = (env: string, commitHash: string) => {
+    // 更新当前 commit
+    setCurrentCommits(prev => ({
+      ...prev,
+      [env]: commitHash
+    }));
+
+    // 更新 release histories 中的 isCurrent 标记
+    const updatedHistories = { ...releaseHistories };
+    updatedHistories[env] = releaseHistories[env].map(release => ({
+      ...release,
+      isCurrent: release.commitHash === commitHash
+    }));
+
+    console.log(`Rolling back to ${commitHash} in ${env}`);
+  };
+
   const renderApplicationDetail = (app: ExtendedApplication) => {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -695,128 +749,169 @@ export function ArgoResource({ activeSubMenu, onSelectApp }: ArgoResourceProps) 
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue={app.deployedEnvironments[0]}>
-                <TabsList className="grid w-full grid-cols-3 mb-6">
-                  {app.deployedEnvironments.map((env) => (
-                    <TabsTrigger key={env} value={env}>
-                      {env}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50 dark:bg-gray-800">
+                    <TableHead>Commit Log</TableHead>
+                    <TableHead>Commit Hash</TableHead>
+                    <TableHead>Commit Author</TableHead>
+                    <TableHead>Operator</TableHead>
+                    <TableHead>Release Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {releaseHistories.SIT.map((release, index) => (
+                    <TableRow
+                      key={index}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <TableCell>
+                        <div className="space-y-2">
+                          <div className="font-medium">{release.commitLog}</div>
+                          <div className="flex gap-2">
+                            {/* SIT 环境状态 */}
+                            {releaseHistories.SIT.find(r => r.commitHash === release.commitHash)?.isCurrent && (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-600 dark:bg-blue-900/20">
+                                Current SIT
+                              </Badge>
+                            )}
+                            {/* UAT 环境状态 */}
+                            {releaseHistories.UAT.find(r => r.commitHash === release.commitHash)?.isCurrent && (
+                              <Badge variant="outline" className="bg-purple-50 text-purple-600 dark:bg-purple-900/20">
+                                Current UAT
+                              </Badge>
+                            )}
+                            {/* PRD 环境状态 */}
+                            {releaseHistories.PRD.find(r => r.commitHash === release.commitHash)?.isCurrent && (
+                              <Badge variant="outline" className="bg-green-50 text-green-600 dark:bg-green-900/20">
+                                Current PRD
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <a
+                          href={`${app.remoteRepo.baseCommitUrl}/${release.commitHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex items-center space-x-1 text-sm"
+                        >
+                          <code className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-blue-600 hover:text-blue-700 transition-colors">
+                            {release.commitHash.substring(0, 7)}
+                          </code>
+                          <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all" />
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                              {release.commitAuthor.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{release.commitAuthor}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="bg-purple-100 text-purple-600 text-xs">
+                              {release.operator.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{release.operator}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <time className="text-gray-500">
+                          {new Date(release.releaseDate).toLocaleString()}
+                        </time>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {release.status === 'success' ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : release.status === 'failed' ? (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          ) : (
+                            <Clock className="h-4 w-4 text-blue-500" />
+                          )}
+                          <span className={
+                            release.status === 'success' ? 'text-green-600' :
+                            release.status === 'failed' ? 'text-red-600' : 'text-blue-600'
+                          }>
+                            {release.status.charAt(0).toUpperCase() + release.status.slice(1)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-8 h-8 p-0"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {/* Redeploy 选项 */}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                console.log(`Redeploying in SIT`);
+                              }}
+                            >
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Redeploy
+                            </DropdownMenuItem>
 
-                {app.deployedEnvironments.map((env) => (
-                  <TabsContent key={env} value={env}>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50 dark:bg-gray-800">
-                          <TableHead>Commit Log</TableHead>
-                          <TableHead>Commit Hash</TableHead>
-                          <TableHead>Commit Author</TableHead>
-                          <TableHead>Operator</TableHead>
-                          <TableHead>Release Date</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="w-[100px]">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {releaseHistories[env].map((release, index) => (
-                          <TableRow
-                            key={index}
-                            className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                              release.isCurrent ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
-                            }`}
-                          >
-                            <TableCell>
-                              <div className="space-y-1">
-                                <div className="font-medium">{release.commitLog}</div>
-                                {release.deploymentDetails && (
-                                  <div className="text-xs text-gray-500">
-                                    Duration: {release.deploymentDetails.duration}
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <a
-                                href={`${app.remoteRepo.baseCommitUrl}/${release.commitHash}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group flex items-center space-x-1 text-sm"
-                              >
-                                <code className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-blue-600 hover:text-blue-700 transition-colors">
-                                  {release.commitHash.substring(0, 7)}
-                                </code>
-                                <ExternalLink className="h-3 w-3 text-gray-400 group-hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all" />
-                              </a>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                                    {release.commitAuthor.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span>{release.commitAuthor}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback className="bg-purple-100 text-purple-600 text-xs">
-                                    {release.operator.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span>{release.operator}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <time className="text-gray-500">
-                                {new Date(release.releaseDate).toLocaleString()}
-                              </time>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                {release.status === 'success' ? (
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                ) : release.status === 'failed' ? (
-                                  <XCircle className="h-4 w-4 text-red-500" />
-                                ) : (
-                                  <Clock className="h-4 w-4 text-blue-500" />
-                                )}
-                                <span className={
-                                  release.status === 'success' ? 'text-green-600' :
-                                  release.status === 'failed' ? 'text-red-600' : 'text-blue-600'
-                                }>
-                                  {release.status.charAt(0).toUpperCase() + release.status.slice(1)}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={release.isCurrent}
-                                className={`w-full ${
-                                  release.isCurrent
-                                    ? 'cursor-not-allowed opacity-50'
-                                    : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30'
-                                }`}
+                            {/* Promote 选项 - 根据当前环境显示不同的选项 */}
+                            {releaseHistories.SIT.includes(release) && (
+                              <DropdownMenuItem
                                 onClick={() => {
-                                  if (!release.isCurrent) {
-                                    console.log(`Rolling back to ${release.commitHash} in ${env}`);
+                                  console.log('Promoting to UAT');
+                                }}
+                              >
+                                <ChevronRight className="h-4 w-4 mr-2" />
+                                Promote to UAT
+                              </DropdownMenuItem>
+                            )}
+
+                            {releaseHistories.UAT.includes(release) && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  console.log('Promoting to PRD');
+                                }}
+                              >
+                                <ChevronRight className="h-4 w-4 mr-2" />
+                                Promote to PRD
+                              </DropdownMenuItem>
+                            )}
+
+                            {/* Rollback 选项 */}
+                            {!release.isCurrent && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  if (release.commitHash !== currentCommits['SIT']) {
+                                    handleRollback('SIT', release.commitHash);
                                   }
                                 }}
                               >
-                                {release.isCurrent ? 'Current' : 'Rollback'}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TabsContent>
-                ))}
-              </Tabs>
+                                <History className="h-4 w-4 mr-2" />
+                                Rollback to this version
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </div>
