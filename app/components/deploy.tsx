@@ -353,6 +353,44 @@ export function DeployForm({ onCancel }: DeployFormProps) {
     }
   };
 
+  // 在 DeployForm 组件中添加用户租户状态
+  const [availableTenants, setAvailableTenants] = useState<TenantInfo[]>([]);
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('');
+
+  // 添加获取用户租户的 effect
+  useEffect(() => {
+    // 这里模拟从 API 获取当前用户可用的租户列表
+    // 实际实现时应该调用后端 API
+    const fetchUserTenants = async () => {
+      // 模拟 API 调用
+      const userTenants = tenants.filter(tenant =>
+        // 这里可以添加实际的权限检查逻辑
+        true
+      );
+      setAvailableTenants(userTenants);
+    };
+
+    fetchUserTenants();
+  }, []);
+
+  // 首先添加 SyncOptions 接口和状态
+  interface SyncOptions {
+    respectIgnoreDifferences: boolean;
+    createNamespace: boolean;
+    applyOutOfSyncOnly: boolean;
+    pruneLast: boolean;
+    serverSideApply: boolean;
+  }
+
+  // 在 DeployForm 组件中添加状态
+  const [syncOptions, setSyncOptions] = useState<SyncOptions>({
+    respectIgnoreDifferences: true,
+    createNamespace: false,
+    applyOutOfSyncOnly: true,
+    pruneLast: true,
+    serverSideApply: true
+  });
+
   return (
     <div className="flex relative w-full min-h-screen p-6">
       <div
@@ -361,13 +399,12 @@ export function DeployForm({ onCancel }: DeployFormProps) {
         style={{ width: isDryRunOpen ? '80%' : '100%' }}
       >
         <div className="flex flex-col space-y-6 w-full max-w-[2400px] mx-auto">
-          {/* Template Selection Block */}
           <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-gray-100 dark:border-gray-700">
             <CardHeader className="border-b border-gray-100 dark:border-gray-700">
               <CardTitle className="text-xl font-semibold flex items-center space-x-3">
                 <Layout className="h-6 w-6 text-blue-500 dark:text-blue-400" />
                 <span className="bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-200 dark:to-gray-400 text-transparent bg-clip-text">
-                  Template Selection
+                  Application Template Selection
                 </span>
                 {templateSource.value && (
                   <CheckCircle className="h-5 w-5 text-emerald-500" />
@@ -600,9 +637,8 @@ export function DeployForm({ onCancel }: DeployFormProps) {
                       </div>
                     )}
 
-                    {/* 现有的说明文本 */}
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Enter the URL and target revision of your template repository. The platform will sync the template from the specified revision.
+                      Enter the URL and target revision of your template repository.
                     </p>
                   </div>
                 </TabsContent>
@@ -662,7 +698,7 @@ export function DeployForm({ onCancel }: DeployFormProps) {
                 {/* Basic Information */}
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
-                    {/* Tenant Name */}
+                    {/* Tenant Name - 更新为 Select 组件 */}
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Label htmlFor="tenantName" className="text-sm font-medium">
@@ -679,7 +715,29 @@ export function DeployForm({ onCancel }: DeployFormProps) {
                           </Tooltip>
                         </TooltipProvider>
                       </div>
-                      <Input id="tenantName" placeholder="Enter tenant name" className="w-full" />
+                      <Select
+                        value={selectedTenantId}
+                        onValueChange={setSelectedTenantId}
+                      >
+                        <SelectTrigger id="tenantName" className="w-full">
+                          <SelectValue placeholder="Select tenant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableTenants.map((tenant) => (
+                            <SelectItem
+                              key={tenant.id}
+                              value={tenant.id}
+                            >
+                              {tenant.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedTenantId && (
+                        <p className="text-sm text-gray-500">
+                          Selected tenant: {availableTenants.find(t => t.id === selectedTenantId)?.name}
+                        </p>
+                      )}
                     </div>
 
                     {/* App Code */}
@@ -917,6 +975,206 @@ export function DeployForm({ onCancel }: DeployFormProps) {
                       )}
                     </div>
                   )}
+                </div>
+
+                <Separator className="my-6" />
+
+                {/* Sync Options Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-medium">Sync Options</h3>
+                      <p className="text-sm text-gray-500">
+                        Default sync options are pre-configured for optimal deployment
+                      </p>
+                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="h-4 w-4 text-gray-400" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">Configure how ArgoCD should handle the synchronization process</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    {/* Respect Ignore Differences */}
+                    <div className="flex items-center justify-between space-x-2 p-3 bg-white dark:bg-gray-900 rounded-lg">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Label className="text-sm font-medium">Respect Ignore Differences</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  When enabled, ArgoCD will respect the ignoreDifferences settings in the Application spec,
+                                  allowing specific fields to be excluded from sync status and diff calculations.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">Default: On</span>
+                        <Switch
+                          checked={syncOptions.respectIgnoreDifferences}
+                          onCheckedChange={(checked) =>
+                            setSyncOptions(prev => ({ ...prev, respectIgnoreDifferences: checked }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* Create Namespace */}
+                    <div className="flex items-center justify-between space-x-2 p-3 bg-white dark:bg-gray-900 rounded-lg">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Label className="text-sm font-medium">Create Namespace</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  Controls whether ArgoCD should automatically create the target namespace
+                                  if it doesn't exist in the cluster. When disabled, deployment will fail
+                                  if namespace is missing.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">Default: Off</span>
+                        <Switch
+                          checked={syncOptions.createNamespace}
+                          onCheckedChange={(checked) =>
+                            setSyncOptions(prev => ({ ...prev, createNamespace: checked }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* Apply Out of Sync Only */}
+                    <div className="flex items-center justify-between space-x-2 p-3 bg-white dark:bg-gray-900 rounded-lg">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Label className="text-sm font-medium">Apply Out of Sync Only</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  When enabled, ArgoCD will only sync resources that are detected as out of sync with their target state,
+                                  optimizing the sync process and reducing unnecessary updates.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">Default: On</span>
+                        <Switch
+                          checked={syncOptions.applyOutOfSyncOnly}
+                          onCheckedChange={(checked) =>
+                            setSyncOptions(prev => ({ ...prev, applyOutOfSyncOnly: checked }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* Prune Last */}
+                    <div className="flex items-center justify-between space-x-2 p-3 bg-white dark:bg-gray-900 rounded-lg">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Label className="text-sm font-medium">Prune Last</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  When enabled, ArgoCD will delete resources only after all new resources are successfully created,
+                                  ensuring a safer deployment process and minimizing potential downtime.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">Default: On</span>
+                        <Switch
+                          checked={syncOptions.pruneLast}
+                          onCheckedChange={(checked) =>
+                            setSyncOptions(prev => ({ ...prev, pruneLast: checked }))
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* Server Side Apply */}
+                    <div className="flex items-center justify-between space-x-2 p-3 bg-white dark:bg-gray-900 rounded-lg">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Label className="text-sm font-medium">Server Side Apply</Label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <HelpCircle className="h-4 w-4 text-gray-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  When enabled, ArgoCD will use server-side apply for resource updates, providing better
+                                  conflict resolution and field management through the Kubernetes API server.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">Default: On</span>
+                        <Switch
+                          checked={syncOptions.serverSideApply}
+                          onCheckedChange={(checked) =>
+                            setSyncOptions(prev => ({ ...prev, serverSideApply: checked }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Active Sync Options Summary */}
+                  <div className="mt-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Active sync options:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(syncOptions).map(([key, value]) => (
+                        value && (
+                          <Badge
+                            key={key}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                          </Badge>
+                        )
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
