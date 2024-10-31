@@ -877,6 +877,33 @@ export function ArgoResource({ activeSubMenu, onSelectApp }: ArgoResourceProps) 
           </Button>
         </div>
         <div className="flex items-center space-x-4">
+          {/* Add these new buttons */}
+          {selectedApps.length > 0 && (
+            <>
+              <Button
+                variant="outline"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                onClick={() => {
+                  console.log('Deleting apps:', selectedApps);
+                  // Add your delete logic here
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Selected
+              </Button>
+              <Button
+                variant="outline"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                onClick={() => {
+                  console.log('Syncing apps:', selectedApps);
+                  // Add your sync logic here
+                }}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Sync Selected
+              </Button>
+            </>
+          )}
           <Button onClick={() => setIsCreating(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Application

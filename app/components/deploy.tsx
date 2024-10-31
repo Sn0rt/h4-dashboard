@@ -7,12 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { XCircle, PlusCircle, Cpu, MemoryStick, HardDrive, Network, Box, X, CheckCircle, Layout, Settings2 } from 'lucide-react';
+import { XCircle, PlusCircle, Cpu, MemoryStick, HardDrive, Network, Box, X, CheckCircle, Layout, Settings2, Check, RefreshCw, HelpCircle } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip"
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { HelpCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft } from 'lucide-react';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -313,6 +312,47 @@ export function DeployForm({ onCancel }: DeployFormProps) {
   const [enableExternalSecret, setEnableExternalSecret] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<string>('');
 
+  // 首先添加一个新的状态来跟踪每个环境的验证结果
+  interface ValidationResult {
+    environment: string;
+    isValid: boolean;
+    message?: string;
+  }
+
+  // 在 DeployForm 组件中添加新的状态
+  const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
+  const [isValidating, setIsValidating] = useState(false);
+
+  // 添加验证函数
+  const validateExternalTemplate = async () => {
+    if (!templateSource.value || !templateSource.targetRevision) {
+      return;
+    }
+
+    setIsValidating(true);
+    setValidationResults([]);
+
+    try {
+      // 这里模拟API调用，实际实现时替换为真实的API调用
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // 模拟验证结果
+      const results: ValidationResult[] = Object.keys(clusterDefaults).map(env => ({
+        environment: env,
+        isValid: Math.random() > 0.3,
+        message: Math.random() > 0.3
+          ? 'Template structure validated successfully'
+          : 'Invalid template structure or missing required files'
+      }));
+
+      setValidationResults(results);
+    } catch (error) {
+      console.error('Validation failed:', error);
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   return (
     <div className="flex relative w-full min-h-screen p-6">
       <div
@@ -495,36 +535,72 @@ export function DeployForm({ onCancel }: DeployFormProps) {
                       )}
                     </div>
 
-                    {/* Instance Name Input (when URL is provided) */}
-                    {templateSource.value && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="externalInstanceName" className="text-base font-medium">
-                            Instance Name
-                          </Label>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <HelpCircle className="h-4 w-4 text-gray-400" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="max-w-xs">Provide a unique name for this external template instance</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                    {/* 添加验证按钮和结果显示 */}
+                    {templateSource.value && templateSource.targetRevision && (
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <Button
+                            onClick={validateExternalTemplate}
+                            disabled={isValidating}
+                            className="bg-blue-500 hover:bg-blue-600 text-white"
+                          >
+                            {isValidating ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                Validating...
+                              </>
+                            ) : (
+                              <>
+                                <Check className="h-4 w-4 mr-2" />
+                                Validate Template
+                              </>
+                            )}
+                          </Button>
+                          {validationResults.length > 0 && (
+                            <span className="text-sm text-gray-500">
+                              Validation completed for {validationResults.length} environments
+                            </span>
+                          )}
                         </div>
-                        <Input
-                          id="externalInstanceName"
-                          placeholder="Enter instance name"
-                          value={templateSource.instanceName}
-                          onChange={(e) =>
-                            setTemplateSource({ ...templateSource, instanceName: e.target.value })
-                          }
-                          className="w-full"
-                        />
+
+                        {/* 验证结果显示 */}
+                        {validationResults.length > 0 && (
+                          <div className="mt-4 space-y-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">
+                              Validation Results
+                            </h4>
+                            <div className="grid grid-cols-2 gap-3">
+                              {validationResults.map((result) => (
+                                <div
+                                  key={result.environment}
+                                  className={`p-3 rounded-lg border ${
+                                    result.isValid
+                                      ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                                      : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">{result.environment}</span>
+                                    {result.isValid ? (
+                                      <CheckCircle className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                      <XCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                  </div>
+                                  <p className={`text-sm mt-1 ${
+                                    result.isValid ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {result.message}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
+                    {/* 现有的说明文本 */}
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Enter the URL and target revision of your template repository. The platform will sync the template from the specified revision.
                     </p>
@@ -536,17 +612,17 @@ export function DeployForm({ onCancel }: DeployFormProps) {
 
           <Separator className="my-6" />
 
-          {/* Template Configuration Block */}
+          {/* Template Configuration Block - Update to ArgoCD Application Block */}
           <Card className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-gray-100 dark:border-gray-700">
             <CardHeader className="border-b border-gray-100 dark:border-gray-700">
               <CardTitle className="text-xl font-semibold flex items-center space-x-3">
                 <Settings2 className="h-6 w-6 text-purple-500 dark:text-purple-400" />
                 <span className="bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-200 dark:to-gray-400 text-transparent bg-clip-text">
-                  Template Configuration
+                  ArgoCD Application Instantiation
                 </span>
               </CardTitle>
               <p className="text-sm text-gray-500 dark:text-gray-400 ml-9">
-                Configure the deployment parameters for your selected template
+                Configure the ArgoCD Application parameters to instantiate your selected template
               </p>
             </CardHeader>
             <CardContent className="p-6">
