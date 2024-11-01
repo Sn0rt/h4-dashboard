@@ -1,37 +1,28 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { XCircle, PlusCircle, Cpu, MemoryStick, HardDrive, Network, Box, X, CheckCircle, Layout, Settings2, Check, RefreshCw, HelpCircle } from 'lucide-react';
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip } from "@/components/ui/tooltip"
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft } from 'lucide-react';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import yaml from 'react-syntax-highlighter/dist/esm/languages/hljs/yaml';
-import { vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   clusterDefaults,
-  type ClusterDefaults,
   tenants,
   fieldDescriptions,
-  resourceDescriptions,
   mockYamlTemplate,
   type ClusterQuota,
   type TenantInfo,
-  type FieldDescription,
-  type FieldDescriptions,
-  type ValidationStatus,
-  type ValidationStatuses,
   type Ingress,
   type Repository,
   type TemplateSource,
@@ -79,32 +70,6 @@ export function DeployForm({ onCancel }: DeployFormProps) {
     const newIngresses = [...ingresses];
     newIngresses[index][field] = value;
     setIngresses(newIngresses);
-  };
-
-  const addRepository = () => {
-    if (repositories.length < 2) {
-      setRepositories([...repositories, { url: '', branch: '' }]);
-    }
-  };
-
-  const removeRepository = (index: number) => {
-    setRepositories(repositories.filter((_, i) => i !== index));
-  };
-
-  const updateRepository = (index: number, field: keyof Repository, value: string) => {
-    const newRepositories = [...repositories];
-    newRepositories[index][field] = value;
-    setRepositories(newRepositories);
-  };
-
-  const validateRepos = async () => {
-    setValidationStatus('loading');
-    // 这里应该是一个实际的API调用来验证仓库
-    // 为了演示，我们使用一个模拟的异步操作
-    setTimeout(() => {
-      // 随机设置验结果
-      setValidationStatus(Math.random() > 0.5 ? 'success' : 'error');
-    }, 1000);
   };
 
   // 1. 将 calculateProgress 移动到 useEffect 内部

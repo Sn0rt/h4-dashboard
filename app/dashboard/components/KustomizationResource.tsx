@@ -7,19 +7,6 @@ import { CheckCircle, AlertCircle, Clock, XCircle, Plus, RefreshCw, Trash2, Chev
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { kustomizations, type Kustomization } from './kustomizationMock';
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'Ready':
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
-    case 'Failed':
-      return <XCircle className="h-4 w-4 text-red-500" />;
-    case 'Progressing':
-      return <Clock className="h-4 w-4 text-blue-500" />;
-    default:
-      return <AlertCircle className="h-4 w-4 text-gray-500" />;
-  }
-};
-
 export function KustomizationResource() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedKustomization, setSelectedKustomization] = useState<Kustomization | null>(null);

@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, ChevronUp, Check, AlertCircle, Clock, CheckCircle, XCircle, ChevronLeft, FileText, BarChart, History, ExternalLink, Pause } from "lucide-react"
-import { Application, WorkflowTemplate, Workflow } from '../interfaces';
+import { AlertCircle, Clock, CheckCircle, XCircle, ChevronLeft, FileText, BarChart, History, ExternalLink, Pause } from "lucide-react"
+import { Application } from '../interfaces';
 import { Trash2, RefreshCw, Plus } from "lucide-react"
 import { DeployForm } from '@/app/components/deploy';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
